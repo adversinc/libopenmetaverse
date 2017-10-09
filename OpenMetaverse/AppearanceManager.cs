@@ -125,8 +125,8 @@ namespace OpenMetaverse
         /// <summary>Number of times to retry bake upload</summary>
         const int UPLOAD_RETRIES = 2;
         /// <summary>When changing outfit, kick off rebake after
-        /// 20 seconds has passed since the last change</summary>
-        const int REBAKE_DELAY = 1000 * 20;
+        /// 1 seconds has passed since the last change (changed from 20 seconds)</summary>
+        const int REBAKE_DELAY = 1000 * 1;
 
         /// <summary>Total number of wearables for each avatar</summary>
         public const int WEARABLE_COUNT = 16;
@@ -751,13 +751,25 @@ namespace OpenMetaverse
             RemoveFromOutfit(wearableItems);
         }
 
+				/// <summary>
+				/// Removes a list of wearables from the current outfit and set appearance
+				/// </summary>
+				/// <param name="wearableItems">List of wearable inventory items to
+				/// be removed from the outfit</param>
+				public void RemoveFromOutfit(List<InventoryItem> wearableItems) {
+					RemoveFromOutfit(wearableItems, false);
+				}
+
 
         /// <summary>
-        /// Removes a list of wearables from the current outfit and set appearance
+        /// Removes a list of wearables from the current outfit and set appearance,
+				/// with a workaround for multiple clothing layers (allows to force an
+				/// appearance bake)
         /// </summary>
         /// <param name="wearableItems">List of wearable inventory items to
         /// be removed from the outfit</param>
-        public void RemoveFromOutfit(List<InventoryItem> wearableItems)
+				/// <param name="forceNeedAppearance">Force to update appearance after removal</param>
+        public void RemoveFromOutfit(List<InventoryItem> wearableItems, bool forceNeedAppearance)
         {
             List<InventoryWearable> wearables = new List<InventoryWearable>();
             List<InventoryItem> attachments = new List<InventoryItem>();
@@ -795,7 +807,7 @@ namespace OpenMetaverse
                 Detach(attachments[i].UUID);
             }
 
-            if (needSetAppearance)
+            if (needSetAppearance || forceNeedAppearance)
             {
                 SendAgentIsNowWearing();
                 DelayedRequestSetAppearance();
@@ -928,7 +940,8 @@ namespace OpenMetaverse
             if (replaceItems)
                 ReplaceOutfit(wearableItems);
             else
-                AddToOutfit(wearableItems);
+								// It seems we have to have "false" down there
+								AddToOutfit(wearableItems, false);
         }
 
         #endregion Publics Methods
@@ -1415,7 +1428,7 @@ namespace OpenMetaverse
                             VisualParam driver = VisualParams.Params[p.Drivers[i]];
                             if (driver.AlphaParams.HasValue && driver.AlphaParams.Value.TGAFile != string.Empty && !driver.IsBumpAttribute && !alphaMasks.ContainsKey(driver.AlphaParams.Value))
                             {
-                                alphaMasks.Add(driver.AlphaParams.Value, kvp.Value == 0 ? 0.01f : kvp.Value);
+																alphaMasks.Add(driver.AlphaParams.Value, kvp.Value == 0 ? 0.01f : kvp.Value);
                             }
                         }
                     }
@@ -1850,29 +1863,35 @@ namespace OpenMetaverse
             OSDMap request = new OSDMap(1);
             request["cof_version"] = COF.Version;
 
-            string msg = "Setting server side baking failed";
+						// Try server baking several times
+						int triesLeft = 3;
+						if(--triesLeft > 0) {
+								string msg = "Setting server side baking failed";
 
-            OSD res = capsRequest.GetResponse(request, OSDFormat.Xml, Client.Settings.CAPS_TIMEOUT * 2);
+								OSD res = capsRequest.GetResponse(request, OSDFormat.Xml, Client.Settings.CAPS_TIMEOUT * 2);
 
-            if (res != null && res is OSDMap)
-            {
-                OSDMap result = (OSDMap)res;
-                if (result["success"])
-                {
-                    Logger.Log("Successfully set appearance", Helpers.LogLevel.Info, Client);
-                    // TODO: Set local visual params and baked textures based on the result here
-                    return true;
-                }
-                else
-                {
-                    if (result.ContainsKey("error"))
-                    {
-                        msg += ": " + result["error"].AsString();
-                    }
-                }
-            }
+								if (res != null && res is OSDMap)
+								{
+										OSDMap result = (OSDMap)res;
+										if (result["success"])
+										{
+												Logger.Log("Successfully set appearance", Helpers.LogLevel.Info, Client);
+												// TODO: Set local visual params and baked textures based on the result here
+												return true;
+										}
+										else
+										{
+												if (result.ContainsKey("error"))
+												{
+														msg += ": " + result["error"].AsString();
+												}
+										}
+								}
 
-            Logger.Log(msg, Helpers.LogLevel.Error, Client);
+								Logger.Log(msg, Helpers.LogLevel.Error, Client);
+
+								Logger.Log("Server bake tries left: " + triesLeft.ToString(), Helpers.LogLevel.Error, Client);
+						}
 
             return false;
         }
