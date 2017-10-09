@@ -1311,7 +1311,21 @@ namespace OpenMetaverse
             SendPing();
             Interlocked.Increment(ref Stats.SentPings);
         }
-    }
+
+
+				/// <summary>
+				/// Request region information from the simulator.
+				/// <seealso cref="RegionInfo"/>
+				/// </summary>
+				public void RequestRegionInfo() {
+					RequestRegionInfoPacket use = new RequestRegionInfoPacket();
+					use.AgentData.AgentID = Client.Self.AgentID;
+					use.AgentData.SessionID = Client.Self.SessionID;
+
+					// Send the initial packet out
+					SendPacket(use);
+				}
+	}
 
     public sealed class IncomingPacketIDCollection
     {

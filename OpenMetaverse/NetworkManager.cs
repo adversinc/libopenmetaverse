@@ -378,9 +378,33 @@ namespace OpenMetaverse
             RegisterCallback(PacketType.CompletePingCheck, CompletePingCheckHandler, false);
             RegisterCallback(PacketType.SimStats, SimStatsHandler, false);
 
+						// Register region info callback
+						RegisterCallback(PacketType.RegionInfo, RegionInfoHandler, false);
+
             // GLOBAL SETTING: Don't force Expect-100: Continue headers on HTTP POST calls
             ServicePointManager.Expect100Continue = false;
         }
+
+				// Region info related stuff
+				private EventHandler<RegionInfoEventArgs> m_RegionInfo;
+
+				public event EventHandler<RegionInfoEventArgs> RegionInfo {
+					add { lock(m_LoggedOutLock) { m_RegionInfo += value; } }
+					remove { lock(m_LoggedOutLock) { m_RegionInfo -= value; } }
+				}
+
+				protected virtual void OnRegionInfo(RegionInfoEventArgs e) {
+					EventHandler<RegionInfoEventArgs> handler = m_RegionInfo;
+					if(handler != null)
+						handler(this, e);
+				}
+
+				protected void RegionInfoHandler(object sender, PacketReceivedEventArgs e) {
+					RegionInfoPacket data = (RegionInfoPacket)e.Packet;
+
+					RegionInfoEventArgs args = new RegionInfoEventArgs(data);
+					OnRegionInfo(args);
+				}
 
         /// <summary>
         /// Register an event handler for a packet. This is a low level event
@@ -1282,7 +1306,74 @@ namespace OpenMetaverse
         }
     }
 
-    public class PacketSentEventArgs : EventArgs
+		/// <summary>
+		/// Region information event args
+		/// </summary>
+		public class RegionInfoEventArgs : EventArgs 
+		{
+			// Block 1
+			public byte[] SimName;
+			public uint EstateID;
+			public uint ParentEstateID;
+			public uint RegionFlags;
+			public byte SimAccess;
+			public byte MaxAgents;
+			public float BillableFactor;
+			public float ObjectBonusFactor;
+			public float WaterHeight;
+			public float TerrainRaiseLimit;
+			public float TerrainLowerLimit;
+			public int PricePerMeter;
+			public int RedirectGridX;
+			public int RedirectGridY;
+			public bool UseEstateSun;
+			public float SunHour;
+
+			// Block 2
+			public byte[] ProductSKU;
+			public byte[] ProductName;
+			public uint MaxAgents32;
+			public uint HardMaxAgents;
+			public uint HardMaxObjects;
+
+			// Block 3
+			public ulong[] RegionFlagsExtended;
+
+			public RegionInfoEventArgs(RegionInfoPacket src) 
+			{
+				SimName = src.RegionInfo.SimName;
+				EstateID = src.RegionInfo.EstateID;
+				ParentEstateID = src.RegionInfo.ParentEstateID;
+				RegionFlags = src.RegionInfo.RegionFlags;
+				SimAccess = src.RegionInfo.SimAccess;
+				MaxAgents = src.RegionInfo.MaxAgents;
+				BillableFactor = src.RegionInfo.BillableFactor;
+				ObjectBonusFactor = src.RegionInfo.ObjectBonusFactor;
+				WaterHeight = src.RegionInfo.WaterHeight;
+				TerrainRaiseLimit = src.RegionInfo.TerrainRaiseLimit;
+				TerrainLowerLimit = src.RegionInfo.TerrainLowerLimit;
+				PricePerMeter = src.RegionInfo.PricePerMeter;
+				RedirectGridX = src.RegionInfo.RedirectGridX;
+				RedirectGridY = src.RegionInfo.RedirectGridY;
+				UseEstateSun = src.RegionInfo.UseEstateSun;
+				SunHour = src.RegionInfo.SunHour;
+
+				// Block 2
+				ProductSKU = src.RegionInfo2.ProductSKU;
+				ProductName = src.RegionInfo2.ProductName;
+				MaxAgents32 = src.RegionInfo2.MaxAgents32;
+				HardMaxAgents = src.RegionInfo2.HardMaxAgents;
+				HardMaxObjects = src.RegionInfo2.HardMaxObjects;
+
+				// Block 3
+				RegionFlagsExtended = new ulong[src.RegionInfo3.Length];
+				for(int i = 0; i < src.RegionInfo3.Length; i++) {
+					RegionFlagsExtended[i] = src.RegionInfo3[i].RegionFlagsExtended;
+				}
+			}
+		}
+
+    public class PacketSentEventArgs : EventArgs 
     {
         private readonly byte[] m_Data;
         private readonly int m_SentBytes;
