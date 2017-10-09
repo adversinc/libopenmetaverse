@@ -3535,7 +3535,16 @@ namespace OpenMetaverse
                     message.Offline = (InstantMessageOnline)im.MessageBlock.Offline;
                     message.BinaryBucket = im.MessageBlock.BinaryBucket;
 
-                    OnInstantMessage(new InstantMessageEventArgs(message, simulator));
+										// The workaround to actually discard muted people and objects
+										var muted = false;
+
+										this.MuteList.ForEach(delegate (KeyValuePair<string, MuteEntry> kvp) {
+											if(kvp.Value.ID == message.FromAgentID) { muted = true; }
+										});
+
+										if(!muted) { 
+											OnInstantMessage(new InstantMessageEventArgs(message, simulator));
+										}
                 }
             }
         }
@@ -4748,6 +4757,12 @@ namespace OpenMetaverse
         /// <summary>Get the simulator where the InstantMessage origniated</summary>
         public Simulator Simulator { get { return m_Simulator; } }
 
+				// Add more public fields for group notices
+				public readonly bool hasInventory;
+				public readonly AssetType assetType;
+				public readonly UUID groupUUID;
+				public readonly string itemName;
+
         /// <summary>
         /// Construct a new instance of the InstantMessageEventArgs object
         /// </summary>
@@ -4757,6 +4772,23 @@ namespace OpenMetaverse
         {
             this.m_IM = im;
             this.m_Simulator = simulator;
+
+						// For notices, pull the inventory flag, asset type and group UUID from the packet
+						if(im.Dialog == InstantMessageDialog.GroupNotice) {
+							int i = 0;
+							hasInventory = im.BinaryBucket[i++] > 0;
+							assetType = (AssetType)im.BinaryBucket[i++];
+
+							groupUUID.FromBytes(im.BinaryBucket, i);
+							i += 16;
+
+							/* Игнорируем эту часть, так как пока не пользуемся названием объекта
+							byte[] buf = new byte[64];
+							for (int j = 0; j < 64 && buf[j] != 0; j++) {
+								buf[j] = im.BinaryBucket[i++];
+							}
+							 */
+						}
         }
     }
 
