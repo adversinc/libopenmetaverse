@@ -467,9 +467,10 @@ namespace OpenMetaverse.Imaging
 
                     if (sourceHasColor)
                     {
-                        bakedRed[i] = (byte)((bakedRed[i] * alphaInv + sourceRed[i] * alpha) >> 8);
-                        bakedGreen[i] = (byte)((bakedGreen[i] * alphaInv + sourceGreen[i] * alpha) >> 8);
-                        bakedBlue[i] = (byte)((bakedBlue[i] * alphaInv + sourceBlue[i] * alpha) >> 8);
+                        // There has to be /255, not >>8
+												bakedRed[i] = (byte)((bakedRed[i] * alphaInv + sourceRed[i] * alpha) / 255);
+												bakedGreen[i] = (byte)((bakedGreen[i] * alphaInv + sourceGreen[i] * alpha) / 255);
+												bakedBlue[i] = (byte)((bakedBlue[i] * alphaInv + sourceBlue[i] * alpha) / 255);
                     }
 
                     if (addSourceAlpha)
@@ -538,7 +539,8 @@ namespace OpenMetaverse.Imaging
 
                 if (param.MultiplyBlend)
                 {
-                    dest.Alpha[i] = (byte)((dest.Alpha[i] * alpha) >> 8);
+										// There has to be /255, not >>8
+										dest.Alpha[i] = (byte)((dest.Alpha[i] * alpha) / 255);
                 }
                 else
                 {
@@ -569,9 +571,10 @@ namespace OpenMetaverse.Imaging
 
             for (int i = 0; i < dest.Red.Length; i++)
             {
-                dest.Red[i] = (byte)((dest.Red[i] * src.Alpha[i]) >> 8);
-                dest.Green[i] = (byte)((dest.Green[i] * src.Alpha[i]) >> 8);
-                dest.Blue[i] = (byte)((dest.Blue[i] * src.Alpha[i]) >> 8);
+							// There has to be /255, not >>8
+							dest.Red[i] = (byte)((dest.Red[i] * src.Alpha[i]) / 255);
+							dest.Green[i] = (byte)((dest.Green[i] * src.Alpha[i]) / 255);
+							dest.Blue[i] = (byte)((dest.Blue[i] * src.Alpha[i]) / 255);
             }
         }
 
@@ -581,9 +584,10 @@ namespace OpenMetaverse.Imaging
 
             for (int i = 0; i < dest.Red.Length; i++)
             {
-                dest.Red[i] = (byte)((dest.Red[i] * Utils.FloatToByte(src.R, 0f, 1f)) >> 8);
-                dest.Green[i] = (byte)((dest.Green[i] * Utils.FloatToByte(src.G, 0f, 1f)) >> 8);
-                dest.Blue[i] = (byte)((dest.Blue[i] * Utils.FloatToByte(src.B, 0f, 1f)) >> 8);
+              // There has to be /255, not >>8
+							dest.Red[i] = (byte)((dest.Red[i] * Utils.FloatToByte(src.R, 0f, 1f)) / 255);
+							dest.Green[i] = (byte)((dest.Green[i] * Utils.FloatToByte(src.G, 0f, 1f)) / 255);
+							dest.Blue[i] = (byte)((dest.Blue[i] * Utils.FloatToByte(src.B, 0f, 1f)) / 255);
             }
         }
 
