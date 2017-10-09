@@ -70,8 +70,11 @@ namespace OpenMetaverse.Rendering
             for (int i = 0; i < newPrim.coords.Count; i++)
             {
                 PrimMesher.Coord c = newPrim.coords[i];
-                mesh.Vertices.Add(new Vertex { Position = new Vector3(c.X, c.Y, c.Z) });
-            }
+								
+								// Also saving the normal within the vertice
+								PrimMesher.Coord n = newPrim.normals[i];
+								mesh.Vertices.Add(new Vertex { Position = new Vector3(c.X, c.Y, c.Z), Normal = new Vector3(n.X, n.Y, n.Z) });
+						}
 
             mesh.Indices = new List<ushort>(newPrim.faces.Count * 3);
             for (int i = 0; i < newPrim.faces.Count; i++)
