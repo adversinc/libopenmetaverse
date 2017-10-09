@@ -92,6 +92,9 @@ namespace OpenMetaverse
                     // this udp socket flag is not supported under mono, 
                     // so we'll catch the exception and continue
                     udpSocket.IOControl(SIO_UDP_CONNRESET, new byte[] { 0 }, null);
+
+										// Turned off because of long-living UDP connection issues
+                    // udpSocket.IOControl(SIO_UDP_CONNRESET, new byte[] { 0 }, null);
                 }
                 catch (SocketException)
                 {

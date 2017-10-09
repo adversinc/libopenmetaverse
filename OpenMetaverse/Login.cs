@@ -902,7 +902,7 @@ namespace OpenMetaverse
         #endregion
 
         #region Private Members
-        private LoginParams CurrentContext = null;
+        public LoginParams CurrentContext = null;
         private AutoResetEvent LoginEvent = new AutoResetEvent(false);
         private LoginStatus InternalStatusCode = LoginStatus.None;
         private string InternalErrorKey = String.Empty;
@@ -913,6 +913,9 @@ namespace OpenMetaverse
         /// <summary>A list of packets obtained during the login process which 
         /// networkmanager will log but not process</summary>
         private readonly List<string> UDPBlacklist = new List<string>();
+
+				// A publicly accessible variable to adjust MAC address for virtual-card servers
+				public static string forceMAC = "";
         #endregion
 
         #region Public Methods
@@ -1221,7 +1224,12 @@ namespace OpenMetaverse
                 {
                     ArrayList loginArray = new ArrayList(1);
                     loginArray.Add(loginXmlRpc);
-                    XmlRpcRequest request = new XmlRpcRequest(CurrentContext.MethodName, loginArray);
+                    XmlRpcRequest request = new XmlRpcRequest(
+											CurrentContext.MethodName,
+											loginArray,
+											OpenMetaverse.Settings.BIND_ADDR
+										);
+
                     var cc = CurrentContext;
                     // Start the request
                     Thread requestThread = new Thread(
@@ -1286,7 +1294,7 @@ namespace OpenMetaverse
         /// <summary>
         /// Handles response from XML-RPC login replies
         /// </summary>
-        private void LoginReplyXmlRpcHandler(XmlRpcResponse response, LoginParams context)
+        public void LoginReplyXmlRpcHandler(XmlRpcResponse response, LoginParams context)
         {
             LoginResponseData reply = new LoginResponseData();
             // Fetch the login response
