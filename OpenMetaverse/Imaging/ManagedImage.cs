@@ -26,6 +26,12 @@
 
 using System;
 
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Runtime.InteropServices;
+using QuickLZSharp;
+
 namespace OpenMetaverse.Imaging
 {
     public class ManagedImage
@@ -269,6 +275,14 @@ namespace OpenMetaverse.Imaging
         /// <param name="height">new height</param>
         public void ResizeNearestNeighbor(int width, int height)
         {
+						// Using a nice-looking bilinear filtering, though less efficient
+						bool USE_BILINEAR = true;
+
+						if(USE_BILINEAR) {
+							ResizeBilinear(width, height);
+							return;
+						}
+
             if (width == Width && height == Height)
                 return;
 
@@ -309,6 +323,113 @@ namespace OpenMetaverse.Imaging
             Alpha = alpha;
             Bump = bump;
         }
+
+				/// <summary>
+				/// Resize or stretch the image using bilinear resampling
+				/// </summary>
+				/// <param name="width">new width</param>
+				/// <param name="height">new height</param>
+				public void ResizeBilinear(int width, int height) {
+					if(width == Width && height == Height)
+						return;
+
+					byte[]
+							red = null,
+							green = null,
+							blue = null,
+							alpha = null,
+							bump = null;
+					int n = width * height;
+
+					if(Red != null) red = new byte[n];
+					if(Green != null) green = new byte[n];
+					if(Blue != null) blue = new byte[n];
+					if(Alpha != null) alpha = new byte[n];
+					if(Bump != null) bump = new byte[n];
+
+					string id = new Random().Next().ToString();
+
+					// Создаем исходную картинку
+					Bitmap srcImage = new Bitmap(Width, Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+					// Заполняем ARGB
+					BitmapData bmpData = srcImage.LockBits(
+						new Rectangle(0, 0, srcImage.Width, srcImage.Height),
+						ImageLockMode.WriteOnly, srcImage.PixelFormat);
+
+					byte[] argb = new byte[Width * Height * 4];
+
+					for(int i = 0; i < Width * Height; i++) {
+						argb[i * 4 + 0] = Blue[i];
+						argb[i * 4 + 1] = Green[i];
+						argb[i * 4 + 2] = Red[i];
+						argb[i * 4 + 3] = (Alpha != null) ? Alpha[i] : (byte)255;
+						//argb[i * 4 + 3] = (byte)255;
+					}
+
+					Marshal.Copy(argb, 0, bmpData.Scan0, argb.Length);
+					srcImage.UnlockBits(bmpData);
+
+					//srcImage.Save(id + "-1src-phase1.png");
+
+					// Меняем размер
+					Bitmap newImage = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+					using(Graphics gr = Graphics.FromImage(newImage)) {
+						gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+						gr.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+						gr.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+
+						gr.DrawImage(srcImage, new Rectangle(0, 0, width, height));
+					}
+
+					// Вытаскиваем обратно данные
+					bmpData = newImage.LockBits(
+						new Rectangle(0, 0, newImage.Width, newImage.Height),
+						ImageLockMode.ReadOnly, newImage.PixelFormat);
+
+					int size = newImage.Width * newImage.Height;
+					byte[] final = new byte[size * 4];
+					Marshal.Copy(bmpData.Scan0, final, 0, size * 4);
+
+					for(int i = 0; i < size; i++) {
+						blue[i] = final[i * 4 + 0];
+						green[i] = final[i * 4 + 1];
+						red[i] = final[i * 4 + 2];
+						if(alpha != null) alpha[i] = final[i * 4 + 3];
+					}
+
+					newImage.UnlockBits(bmpData);
+
+					//newImage.Save(id + "-2res-phase1.png");
+
+					Width = width;
+					Height = height;
+					Red = red;
+					Green = green;
+					Blue = blue;
+					Alpha = alpha;
+					Bump = bump;
+				}
+
+
+				/// <summary>
+				/// Get the point from original texture, x/y
+				/// </summary>
+				/// <param name="width">new width</param>
+				/// <param name="height">new height</param>
+				public byte mixOriginalPoint(float x, float y, byte[] src) {
+					int x0 = (int)x;
+					int x1 = x < Width ? (int)(x + 0.5) : (int)x;
+					int y0 = (int)y;
+					int y1 = y < Height ? (int)(y + 0.5) : (int)y;
+
+					byte pt00 = src[y0 * Width + x0];
+					byte pt10 = src[y0 * Width + x1];
+					byte pt01 = src[y1 * Width + x0];
+					byte pt11 = src[y1 * Width + x1];
+
+					return (byte)(pt00 * (x1 - x) * (y1 - y) + pt10 * (x - x0) * (y1 - y) + pt01 * (x1 - x) * (y - y0) + pt11 * (x - x0) * (y - y0));
+				}
 
         /// <summary>
         /// Create a byte array containing 32-bit RGBA data with a bottom-left
@@ -531,5 +652,85 @@ namespace OpenMetaverse.Imaging
             if (Bump != null) image.Bump = (byte[])Bump.Clone();
             return image;
         }
-    }
+
+				#region Image load/save routines
+				public void saveToFile(string filename) {
+					FileStream fs = File.Create(filename);
+
+					// Arrays size
+					fs.Write(BitConverter.GetBytes(Width), 0, 4);
+					fs.Write(BitConverter.GetBytes(Height), 0, 4);
+					fs.Write(BitConverter.GetBytes((int)Channels), 0, 4);
+
+					writeCompressedArray(fs, Red);
+					writeCompressedArray(fs, Green);
+					writeCompressedArray(fs, Blue);
+					writeCompressedArray(fs, Alpha);
+					writeCompressedArray(fs, Bump);
+
+					fs.Close();
+				}
+
+				void writeCompressedArray(FileStream fs, byte[] array) {
+					int zero = 0;
+
+					if(array != null) {
+						QuickLZ qlz = new QuickLZ();
+						byte[] c = qlz.Compress(array);
+
+						fs.Write(BitConverter.GetBytes(c.Length), 0, 4);
+						fs.Write(c, 0, c.Length);
+					} else {
+						fs.Write(BitConverter.GetBytes(zero), 0, 4);
+					}
+				}
+
+				byte[] readCompressedArray(FileStream fs) {
+					int datasize;
+					byte[] intbuf = new byte[4];
+
+					QuickLZ qlz = new QuickLZ();
+
+					fs.Read(intbuf, 0, 4);
+					datasize = BitConverter.ToInt32(intbuf, 0);
+
+					if(datasize > 0) {
+						byte[] c = new byte[datasize];
+						fs.Read(c, 0, datasize);
+
+						return qlz.Decompress(c);
+					} else {
+						return null;
+					}
+				}
+
+				public bool readFromFile(string filename) {
+					try {
+						FileStream fs = File.OpenRead(filename);
+
+						byte[] intbuf = new byte[8];
+
+						fs.Read(intbuf, 0, 4);
+						Width = BitConverter.ToInt32(intbuf, 0);
+						fs.Read(intbuf, 0, 4);
+						Height = BitConverter.ToInt32(intbuf, 0);
+						fs.Read(intbuf, 0, 4);
+						Channels = (ImageChannels)BitConverter.ToInt32(intbuf, 0);
+
+						Red = readCompressedArray(fs);
+						Green = readCompressedArray(fs);
+						Blue = readCompressedArray(fs);
+						Alpha = readCompressedArray(fs);
+						Bump = readCompressedArray(fs);
+
+						fs.Close();
+					}
+					catch {
+						return false;
+					}
+
+					return true;
+				}
+				#endregion
+	}
 }
