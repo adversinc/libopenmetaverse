@@ -33,8 +33,8 @@ namespace OpenMetaverse.Http
 {
     public class EventQueueClient
     {
-        /// <summary>=</summary>
-        public const int REQUEST_TIMEOUT = 1000 * 120;
+        /// <summary>Seems that SL drops the connection in 30 seconds now instead of 120</summary>
+        public const int REQUEST_TIMEOUT = 1000 * 28;
 
         public delegate void ConnectedCallback();
         public delegate void EventCallback(string eventName, OSDMap body);
@@ -53,6 +53,9 @@ namespace OpenMetaverse.Http
         private int _errorCount;
         /// <summary>For exponential backoff on error.</summary>
         private static Random _random = new Random();
+
+				// Debug queue problems
+				private	long lastQueuePush = 0;
 
         public EventQueueClient(Uri eventQueueLocation)
         {
@@ -175,8 +178,8 @@ namespace OpenMetaverse.Http
                     }
                     else
                     {
-                        Logger.Log(String.Format("Unrecognized caps exception from {0}: {1}",
-                            _Address, error.Message), Helpers.LogLevel.Warning);
+                        Logger.Log(String.Format("Unrecognized caps exception from {0}: {1} (last queue push {2} sec ago)",
+                            _Address, error.Message, DateTime.Now.Ticks / 10000 - lastQueuePush), Helpers.LogLevel.Warning);
                     }
                 }
 
@@ -209,6 +212,8 @@ namespace OpenMetaverse.Http
                 // just sets class _Request variable to the current HttpWebRequest
                 CapsBase.UploadDataAsync(_Address, null, "application/xml", postData, REQUEST_TIMEOUT,
                     delegate(HttpWebRequest newRequest) { _Request = newRequest; }, null, RequestCompletedHandler);
+
+								lastQueuePush = DateTime.Now.Ticks / 10000;
 
                 // If the event queue is dead at this point, turn it off since
                 // that was the last thing we want to do
