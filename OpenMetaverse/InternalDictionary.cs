@@ -304,11 +304,11 @@ namespace OpenMetaverse
         }
 
         /// <summary>
-        /// Removes the specified key, dictionary locking is not performed
+        /// Removes the specified key
         /// </summary>
         /// <param name="key">The key.</param>
         /// <returns><see langword="true"/> if successful, <see langword="false"/> otherwise</returns>
-        internal bool Remove(TKey key)
+        public bool Remove(TKey key)
         {
             lock (Dictionary)
                 return Dictionary.Remove(key);
