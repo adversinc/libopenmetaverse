@@ -676,7 +676,7 @@ namespace OpenMetaverse
         public void AddToOutfit(InventoryItem wearableItem, bool replace)
         {
             List<InventoryItem> wearableItems = new List<InventoryItem> { wearableItem };
-            AddToOutfit(wearableItems, true);
+            AddToOutfit(wearableItems, replace);
         }
 
         /// <summary>
