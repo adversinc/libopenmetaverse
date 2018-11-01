@@ -3182,7 +3182,8 @@ namespace OpenMetaverse
 
             List<InventoryItem> folderContents = new List<InventoryItem>();
 
-            Client.Inventory.FolderContents(folderID, Client.Self.AgentID, false, true, InventorySortOrder.ByDate, 1000 * 15).ForEach(
+						var res = Client.Inventory.FolderContents(folderID, Client.Self.AgentID, false, true, InventorySortOrder.ByDate, 1000 * 15);
+						res.ForEach(
                 delegate(InventoryBase ib)
                 {
                     folderContents.Add(Client.Inventory.FetchItem(ib.UUID, Client.Self.AgentID, 1000 * 10));
