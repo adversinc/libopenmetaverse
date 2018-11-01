@@ -749,7 +749,7 @@ namespace OpenMetaverse
 
             private void UpdateTimer_Elapsed(object obj)
             {
-                if (Client.Network.Connected && Client.Settings.SEND_AGENT_UPDATES)
+                if (Client.Network != null && Client.Network.Connected && Client.Settings.SEND_AGENT_UPDATES)
                 {
                     //Send an AgentUpdate packet
                     SendUpdate(false, Client.Network.CurrentSim);
