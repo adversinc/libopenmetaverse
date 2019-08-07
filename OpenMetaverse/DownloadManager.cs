@@ -146,7 +146,8 @@ namespace OpenMetaverse
             // Crank up the max number of connections per endpoint
             if (request.ServicePoint.ConnectionLimit < Settings.MAX_HTTP_CONNECTIONS)
             {
-                Logger.Log(string.Format("In DownloadManager.SetupRequest() setting conn limit for {0}:{1} to {2}", address.Host, address.Port, Settings.MAX_HTTP_CONNECTIONS), Helpers.LogLevel.Debug);
+                // DINO
+								//Logger.Log(string.Format("In DownloadManager.SetupRequest() setting conn limit for {0}:{1} to {2}", address.Host, address.Port, Settings.MAX_HTTP_CONNECTIONS), Helpers.LogLevel.Debug);
                 request.ServicePoint.ConnectionLimit = Settings.MAX_HTTP_CONNECTIONS;
             }
 
