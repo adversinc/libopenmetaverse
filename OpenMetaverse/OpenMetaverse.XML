@@ -19911,6 +19911,12 @@
             Use Caps for fetching inventory where available
             </summary>
         </member>
+        <member name="F:OpenMetaverse.Settings.RESPECT_INVENTORY_OFFER_ACCEPTS">
+            <summary>
+            Respect the result of OnInventoryObjectOffered event processing
+            (InventoryObjectOfferedEventArgs.Accept)
+            </summary>
+        </member>
         <member name="F:OpenMetaverse.Settings.TRANSFER_TIMEOUT">
             <summary>Number of milliseconds before an asset transfer will time
             out</summary>
