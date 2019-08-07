@@ -4074,43 +4074,45 @@ namespace OpenMetaverse
 
                     OnInventoryObjectOffered(args);
 
-                    if (args.Accept)
-                    {
-                        // Accept the inventory offer
-                        switch (e.IM.Dialog)
-                        {
-                            case InstantMessageDialog.InventoryOffered:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.InventoryAccepted;
-                                break;
-                            case InstantMessageDialog.TaskInventoryOffered:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.TaskInventoryAccepted;
-                                break;
-                            case InstantMessageDialog.GroupNotice:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.GroupNoticeInventoryAccepted;
-                                break;
-                        }
-                        imp.MessageBlock.BinaryBucket = args.FolderID.GetBytes();
-                    }
-                    else
-                    {
-                        // Decline the inventory offer
-                        switch (e.IM.Dialog)
-                        {
-                            case InstantMessageDialog.InventoryOffered:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.InventoryDeclined;
-                                break;
-                            case InstantMessageDialog.TaskInventoryOffered:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.TaskInventoryDeclined;
-                                break;
-                            case InstantMessageDialog.GroupNotice:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.GroupNoticeInventoryDeclined;
-                                break;
-                        }
+										if(Client.Settings.RESPECT_INVENTORY_OFFER_ACCEPTS) { 
+											if (args.Accept)
+											{
+													// Accept the inventory offer
+													switch (e.IM.Dialog)
+													{
+															case InstantMessageDialog.InventoryOffered:
+																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.InventoryAccepted;
+																	break;
+															case InstantMessageDialog.TaskInventoryOffered:
+																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.TaskInventoryAccepted;
+																	break;
+															case InstantMessageDialog.GroupNotice:
+																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.GroupNoticeInventoryAccepted;
+																	break;
+													}
+													imp.MessageBlock.BinaryBucket = args.FolderID.GetBytes();
+											}
+											else
+											{
+													// Decline the inventory offer
+													switch (e.IM.Dialog)
+													{
+															case InstantMessageDialog.InventoryOffered:
+																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.InventoryDeclined;
+																	break;
+															case InstantMessageDialog.TaskInventoryOffered:
+																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.TaskInventoryDeclined;
+																	break;
+															case InstantMessageDialog.GroupNotice:
+																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.GroupNoticeInventoryDeclined;
+																	break;
+													}
 
-                        imp.MessageBlock.BinaryBucket = Utils.EmptyBytes;
-                    }
+													imp.MessageBlock.BinaryBucket = Utils.EmptyBytes;
+											}
 
-                    Client.Network.SendPacket(imp, e.Simulator);
+											Client.Network.SendPacket(imp, e.Simulator);
+									}
                 }
                 catch (Exception ex)
                 {
