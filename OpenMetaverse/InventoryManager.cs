@@ -1109,6 +1109,15 @@ namespace OpenMetaverse
             remove { lock (m_InventoryObjectOfferedLock) { m_InventoryObjectOffered -= value; } }
         }
 
+		/// <summary>
+		/// Raises when inventory object is accepted or rejected
+		/// </summary>
+		public event EventHandler<InventoryOfferProcessedArgs> InventoryOfferProcessed;
+
+		private void OnInventoryOfferProcessed(InventoryOfferProcessedArgs args) {
+			InventoryOfferProcessed?.Invoke(this, args);
+		}
+
         /// <summary>The event subscribers, null of no subscribers</summary>
         private EventHandler<TaskItemReceivedEventArgs> m_TaskItemReceived;
 
@@ -3234,7 +3243,7 @@ namespace OpenMetaverse
             }
         }
 
-		public void AcceptInventoryOffer(InstantMessageDialog type, UUID FromAgentID, UUID folder, UUID IMSessionID, bool accept = true) {
+		public void AcceptInventoryOffer(InstantMessageDialog type, UUID ObjectID, UUID FromAgentID, UUID folder, UUID IMSessionID, bool accept = true) {
 			ImprovedInstantMessagePacket imp = new ImprovedInstantMessagePacket();
 			imp.AgentData.AgentID = Client.Self.AgentID;
 			imp.AgentData.SessionID = Client.Self.SessionID;
@@ -3264,6 +3273,8 @@ namespace OpenMetaverse
 			imp.MessageBlock.BinaryBucket = accept ? folder.GetBytes() : Utils.EmptyBytes;
 
 			Client.Network.SendPacket(imp, Client.Network.CurrentSim);
+
+			OnInventoryOfferProcessed(new InventoryOfferProcessedArgs(type, ObjectID, FromAgentID, folder, accept));
 		}
 
         #endregion Rez/Give
@@ -4107,43 +4118,7 @@ namespace OpenMetaverse
                     OnInventoryObjectOffered(args);
 
 										if(Client.Settings.RESPECT_INVENTORY_OFFER_ACCEPTS) {
-											if (args.Accept)
-											{
-													// Accept the inventory offer
-													switch (e.IM.Dialog)
-													{
-															case InstantMessageDialog.InventoryOffered:
-																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.InventoryAccepted;
-																	break;
-															case InstantMessageDialog.TaskInventoryOffered:
-																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.TaskInventoryAccepted;
-																	break;
-															case InstantMessageDialog.GroupNotice:
-																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.GroupNoticeInventoryAccepted;
-																	break;
-													}
-													imp.MessageBlock.BinaryBucket = args.FolderID.GetBytes();
-											}
-											else
-											{
-													// Decline the inventory offer
-													switch (e.IM.Dialog)
-													{
-															case InstantMessageDialog.InventoryOffered:
-																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.InventoryDeclined;
-																	break;
-															case InstantMessageDialog.TaskInventoryOffered:
-																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.TaskInventoryDeclined;
-																	break;
-															case InstantMessageDialog.GroupNotice:
-																	imp.MessageBlock.Dialog = (byte)InstantMessageDialog.GroupNoticeInventoryDeclined;
-																	break;
-													}
-
-													imp.MessageBlock.BinaryBucket = Utils.EmptyBytes;
-											}
-
-											Client.Network.SendPacket(imp, e.Simulator);
+											AcceptInventoryOffer(e.IM.Dialog, objectID, e.IM.FromAgentID, destinationFolderID, e.IM.IMSessionID, args.Accept);
 									}
                 }
                 catch (Exception ex)
@@ -4945,37 +4920,61 @@ namespace OpenMetaverse
         #endregion Packet Handlers
     }
 
-    #region EventArgs
+#region EventArgs
 
-    public class InventoryObjectOfferedEventArgs : EventArgs
-    {
-        private readonly InstantMessage m_Offer;
-        private readonly AssetType m_AssetType;
-        private readonly UUID m_ObjectID;
-        private readonly bool m_FromTask;
+	public class InventoryOfferProcessedArgs: EventArgs {
+		/// <summary>The type of the inventory offer</summary>
+		public InstantMessageDialog Type { get; }
 
-        /// <summary>Set to true to accept offer, false to decline it</summary>
-        public bool Accept { get; set; }
-        /// <summary>The folder to accept the inventory into, if null default folder for <see cref="AssetType"/> will be used</summary>
-        public UUID FolderID { get; set; }
+		/// <summary>Object ID (UUID.Zero for task offers)</summary>
+		public UUID ObjectID { get; }
 
-        public InstantMessage Offer { get { return m_Offer; } }
-        public AssetType AssetType { get { return m_AssetType; } }
-        public UUID ObjectID { get { return m_ObjectID; } }
-        public bool FromTask { get { return m_FromTask; } }
+		/// <summary>Sender avatar</summary>
+		public UUID FromAgentID { get; }
 
-        public InventoryObjectOfferedEventArgs(InstantMessage offerDetails, AssetType type, UUID objectID, bool fromTask, UUID folderID)
-        {
-            this.Accept = false;
-            this.FolderID = folderID;
-            this.m_Offer = offerDetails;
-            this.m_AssetType = type;
-            this.m_ObjectID = objectID;
-            this.m_FromTask = fromTask;
-        }
-    }
+		/// <summary>Target folder</summary>
+		public UUID Folder { get; }
 
-    public class FolderUpdatedEventArgs : EventArgs
+		/// <summary>If item was accepted</summary>
+		public bool Accept { get; }
+
+		public InventoryOfferProcessedArgs(InstantMessageDialog type, UUID objectID, UUID fromAgentID, UUID folder, bool accept) {
+			this.Type = type;
+			this.ObjectID = objectID;
+			this.FromAgentID = fromAgentID;
+			this.Folder = folder;
+			this.Accept = accept;
+		}
+	}
+
+
+	public class InventoryObjectOfferedEventArgs : EventArgs {
+		private readonly InstantMessage m_Offer;
+		private readonly AssetType m_AssetType;
+		private readonly UUID m_ObjectID;
+		private readonly bool m_FromTask;
+
+		/// <summary>Set to true to accept offer, false to decline it</summary>
+		public bool Accept { get; set; }
+		/// <summary>The folder to accept the inventory into, if null default folder for <see cref="AssetType"/> will be used</summary>
+		public UUID FolderID { get; set; }
+
+		public InstantMessage Offer { get { return m_Offer; } }
+		public AssetType AssetType { get { return m_AssetType; } }
+		public UUID ObjectID { get { return m_ObjectID; } }
+		public bool FromTask { get { return m_FromTask; } }
+
+		public InventoryObjectOfferedEventArgs(InstantMessage offerDetails, AssetType type, UUID objectID, bool fromTask, UUID folderID) {
+			this.Accept = false;
+			this.FolderID = folderID;
+			this.m_Offer = offerDetails;
+			this.m_AssetType = type;
+			this.m_ObjectID = objectID;
+			this.m_FromTask = fromTask;
+		}
+	}
+
+	public class FolderUpdatedEventArgs : EventArgs
     {
         private readonly UUID m_FolderID;
         public UUID FolderID { get { return m_FolderID; } }

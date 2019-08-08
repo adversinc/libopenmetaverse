@@ -14727,6 +14727,11 @@
             <summary>Raised when the simulator sends us data containing
             an inventory object sent by another avatar or primitive</summary>
         </member>
+        <member name="E:OpenMetaverse.InventoryManager.InventoryOfferProcessed">
+            <summary>
+            Raises when inventory object is accepted or rejected
+            </summary>
+        </member>
         <member name="F:OpenMetaverse.InventoryManager.m_TaskItemReceived">
             <summary>The event subscribers, null of no subscribers</summary>
         </member>
@@ -15540,6 +15545,21 @@
             <summary>Process an incoming packet and raise the appropriate events</summary>
             <param name="sender">The sender</param>
             <param name="e">The EventArgs object containing the packet data</param>
+        </member>
+        <member name="P:OpenMetaverse.InventoryOfferProcessedArgs.Type">
+            <summary>The type of the inventory offer</summary>
+        </member>
+        <member name="P:OpenMetaverse.InventoryOfferProcessedArgs.ObjectID">
+            <summary>Object ID (UUID.Zero for task offers)</summary>
+        </member>
+        <member name="P:OpenMetaverse.InventoryOfferProcessedArgs.FromAgentID">
+            <summary>Sender avatar</summary>
+        </member>
+        <member name="P:OpenMetaverse.InventoryOfferProcessedArgs.Folder">
+            <summary>Target folder</summary>
+        </member>
+        <member name="P:OpenMetaverse.InventoryOfferProcessedArgs.Accept">
+            <summary>If item was accepted</summary>
         </member>
         <member name="P:OpenMetaverse.InventoryObjectOfferedEventArgs.Accept">
             <summary>Set to true to accept offer, false to decline it</summary>
