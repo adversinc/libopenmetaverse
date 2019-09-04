@@ -1610,6 +1610,8 @@ namespace OpenMetaverse
         {
             string mac = String.Empty;
 
+						if(forceMAC != "") { return forceMAC; }
+
             try
             {
                 System.Net.NetworkInformation.NetworkInterface[] nics = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
