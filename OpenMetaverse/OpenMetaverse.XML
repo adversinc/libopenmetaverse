@@ -16069,6 +16069,13 @@
             This method now initializes libomv with the results.
             </summary>
         </member>
+        <member name="M:OpenMetaverse.NetworkManager.LoginReplyXmlRpcHandler(Nwc.XmlRpc.XmlRpcResponse,OpenMetaverse.UUID)">
+            <summary>
+            Connect to the simulator after the successful remote XMLRPC login attempt.
+            </summary>
+            <param name="response"></param>
+            <param name="loginID"></param>
+        </member>
         <member name="M:OpenMetaverse.NetworkManager.LoginReplyXmlRpcHandler(Nwc.XmlRpc.XmlRpcResponse,OpenMetaverse.LoginParams)">
             <summary>
             Handles response from XML-RPC login replies
