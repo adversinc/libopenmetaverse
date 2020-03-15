@@ -523,11 +523,12 @@ namespace OpenMetaverse
                 // Queue was empty or all download slots are inuse, let's give up some CPU time
 								try { 
                   Thread.Sleep(500);
-					      } /*catch(System.Threading.ThreadAbortException) {
+					      } catch(System.Threading.ThreadAbortException) {
 					        // Ignore if thread has been aborted by logoff
-				        }*/
+									//Thread.ResetAbort();
+				        }
 				        catch(Exception ex) {
-									;
+									throw;
 								}
             }
 
