@@ -947,7 +947,7 @@ namespace OpenMetaverse
         public event EventHandler<TeleportEventArgs> TeleportProgress
         {
             add { lock (m_TeleportLock) { m_Teleport += value; } }
-            remove { lock (m_TeleportLock) { m_Teleport += value; } }
+            remove { lock (m_TeleportLock) { m_Teleport -= value; } }
         }
 
         /// <summary>The event subscribers. null if no subcribers</summary>
