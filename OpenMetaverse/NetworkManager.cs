@@ -498,9 +498,11 @@ namespace OpenMetaverse
             }
             else
             {
+								string uuid = (Client?.Self != null)? Client.Self.AgentID.ToString(): "???";
                 //throw new NotConnectedException("Packet received before simulator packet processing threads running, make certain you are completely logged in");
-                Logger.Log("Packet received before simulator packet processing threads running, make certain you are completely logged in.", Helpers.LogLevel.Error);
-            }
+                Logger.Log($"{uuid} Packet received before simulator packet processing threads running, make certain you are completely logged in.", Helpers.LogLevel.Error);
+
+						}
         }
 
         /// <summary>
@@ -805,9 +807,10 @@ namespace OpenMetaverse
         public void Shutdown(DisconnectType type, string message)
         {
             Logger.Log("NetworkManager shutdown initiated", Helpers.LogLevel.Info, Client);
+						Logger.Log($"Stack: {Environment.StackTrace}", Helpers.LogLevel.Info, Client);
 
-            // Send a CloseCircuit packet to simulators if we are initiating the disconnect
-            bool sendCloseCircuit = (type == DisconnectType.ClientInitiated || type == DisconnectType.NetworkTimeout);
+						// Send a CloseCircuit packet to simulators if we are initiating the disconnect
+						bool sendCloseCircuit = (type == DisconnectType.ClientInitiated || type == DisconnectType.NetworkTimeout);
 
             lock (Simulators)
             {

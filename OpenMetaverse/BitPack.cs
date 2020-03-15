@@ -35,10 +35,14 @@ namespace OpenMetaverse
     /// </summary>
     public class BitPack
     {
+        private const int MAX_BITS = 8;
+        private readonly bool weAreBigEndian = !BitConverter.IsLittleEndian;
+
         /// <summary></summary>
         public byte[] Data;
 
         /// <summary></summary>
+        private int bytePos;
         public int BytePos
         {
             get
@@ -51,17 +55,8 @@ namespace OpenMetaverse
         }
 
         /// <summary></summary>
-        public int BitPos { get { return bitPos; } }
-
-
-        private const int MAX_BITS = 8;
-        private static readonly byte[] ON = new byte[] { 1 };
-        private static readonly byte[] OFF = new byte[] { 0 };
-
-        private int bytePos;
         private int bitPos;
-        private bool weAreBigEndian = !BitConverter.IsLittleEndian;
-
+        public int BitPos { get { return bitPos; } }
 
         /// <summary>
         /// Default constructor, initialize the bit packer / bit unpacker
@@ -69,21 +64,26 @@ namespace OpenMetaverse
         /// </summary>
         /// <param name="data">Byte array to pack bits in to or unpack from</param>
         /// <param name="pos">Starting position in the byte array</param>
-        public BitPack(byte[] data, int pos)
+        public BitPack(byte[] data, int pos, int bitp = 0)
         {
             Data = data;
             bytePos = pos;
+            bitPos = bitp;
+            if(bitp != 0)
+                Data[pos] &= (byte)~(0xff >> bitPos);
         }
 
         /// <summary>
         /// Pack a floating point value in to the data
         /// </summary>
         /// <param name="data">Floating point value to pack</param>
-        public void PackFloat(float data)
+        public unsafe void PackFloat(float data)
         {
-            byte[] input = BitConverter.GetBytes(data);
-            if (weAreBigEndian) Array.Reverse(input);
-            PackBitArray(input, 32);
+            int d = (*(int*)&data);
+            PackBitsFromByte((byte)d);
+            PackBitsFromByte((byte)(d >> 8));
+            PackBitsFromByte((byte)(d >> 16));
+            PackBitsFromByte((byte)(d >> 24));
         }
 
         /// <summary>
@@ -93,9 +93,14 @@ namespace OpenMetaverse
         /// <param name="totalCount">Number of bits of the integer to pack</param>
         public void PackBits(int data, int totalCount)
         {
-            byte[] input = BitConverter.GetBytes(data);
-            if (weAreBigEndian) Array.Reverse(input);
-            PackBitArray(input, totalCount);
+            while (totalCount > 8)
+            {
+                PackBitsFromByte((byte)data);
+                data >>= 8;
+                totalCount -= 8;
+            }
+            if (totalCount > 0)
+                PackBitsFromByte((byte)data, totalCount);
         }
 
         /// <summary>
@@ -105,22 +110,24 @@ namespace OpenMetaverse
         /// <param name="totalCount">Number of bits of the integer to pack</param>
         public void PackBits(uint data, int totalCount)
         {
-            byte[] input = BitConverter.GetBytes(data);
-            if (weAreBigEndian) Array.Reverse(input);
-            PackBitArray(input, totalCount);
+            while (totalCount > 8)
+            {
+                PackBitsFromByte((byte)data);
+                data >>= 8;
+                totalCount -= 8;
+            }
+            if (totalCount > 0)
+                PackBitsFromByte((byte)data, totalCount);
         }
 
-        /// <summary>
-        /// Pack a single bit in to the data
-        /// </summary>
-        /// <param name="bit">Bit to pack</param>
-        public void PackBit(bool bit)
+        public void PackBitsFromUInt(uint data)
         {
-            if (bit)
-                PackBitArray(ON, 1);
-            else
-                PackBitArray(OFF, 1);
+            PackBitsFromByte((byte)data);
+            PackBitsFromByte((byte)(data >> 8));
+            PackBitsFromByte((byte)(data >> 16));
+            PackBitsFromByte((byte)(data >> 24));
         }
+
 
         /// <summary>
         /// 
@@ -131,35 +138,40 @@ namespace OpenMetaverse
         /// <param name="fracBits"></param>
         public void PackFixed(float data, bool isSigned, int intBits, int fracBits)
         {
-            int unsignedBits = intBits + fracBits;
-            int totalBits = unsignedBits;
-            int min, max;
+            int totalBits = intBits + fracBits;
+            int max = 1 << intBits;
 
             if (isSigned)
             {
                 totalBits++;
-                min = 1 << intBits;
-                min *= -1;
+                data += max;
+                max += max;
             }
+
+            if (totalBits > 32)
+                throw new Exception("Can't use fixed point packing for " + totalBits);
+
+            int v;
+            if(data <= 1e-6f)
+                v = 0;
             else
             {
-                min = 0;
+                if(data > max)
+                    data = max;
+                data *= 1 << fracBits;
+                v = (int)data;
             }
 
-            max = 1 << intBits;
-
-            float fixedVal = Utils.Clamp(data, (float)min, (float)max);
-            if (isSigned) fixedVal += max;
-            fixedVal *= 1 << fracBits;
-
-            if (totalBits <= 8)
-                PackBits((uint)fixedVal, 8);
-            else if (totalBits <= 16)
-                PackBits((uint)fixedVal, 16);
-            else if (totalBits <= 31)
-                PackBits((uint)fixedVal, 32);
-            else
-                throw new Exception("Can't use fixed point packing for " + totalBits);
+            PackBitsFromByte((byte)v);
+            if(totalBits > 8)
+            {
+                PackBitsFromByte((byte)(v >> 8));
+                if (totalBits > 16)
+                {
+                    PackBitsFromByte((byte)(v >> 16));
+                    PackBitsFromByte((byte)(v >> 24));
+                }
+            }
         }
 
         /// <summary>
@@ -169,11 +181,8 @@ namespace OpenMetaverse
         public void PackUUID(UUID data)
         {
             byte[] bytes = data.GetBytes();
-
-            // Not sure if our PackBitArray function can handle 128-bit byte
-            //arrays, so using this for now
             for (int i = 0; i < 16; i++)
-                PackBits(bytes[i], 8);
+                PackBitsFromByte(bytes[i]);
         }
 
         /// <summary>
@@ -182,8 +191,10 @@ namespace OpenMetaverse
         /// <param name="data"></param>
         public void PackColor(Color4 data)
         {
-            byte[] bytes = data.GetBytes();
-            PackBitArray(bytes, 32);
+            PackBitsFromByte(Utils.FloatToByte(data.R, 0f, 1f));
+            PackBitsFromByte(Utils.FloatToByte(data.G, 0f, 1f));
+            PackBitsFromByte(Utils.FloatToByte(data.B, 0f, 1f));
+            PackBitsFromByte(Utils.FloatToByte(data.A, 0f, 1f));
         }
 
         /// <summary>
@@ -251,7 +262,7 @@ namespace OpenMetaverse
         /// <returns>32-bit signed integer</returns>
         public int UnpackInt()
         {
-            return UnpackBits(32);
+            return (int)UnpackUInt();
         }
 
         /// <summary>
@@ -260,44 +271,52 @@ namespace OpenMetaverse
         /// <returns>32-bit unsigned integer</returns>
         public uint UnpackUInt()
         {
-            return UnpackUBits(32);
+            uint tmp = UnpackByte();
+            tmp |= (byte)(UnpackByte() << 8);
+            tmp |= (byte)(UnpackByte() << 16);
+            tmp |= (byte)(UnpackByte() << 24);
+            return tmp;
         }
 
         public byte UnpackByte()
         {
-            byte[] output = UnpackBitsArray(8);
-            return output[0];
+            byte o = Data[bytePos];
+            if (bitPos == 0 || o == 0)
+            {
+                ++bytePos;
+                return o;
+            }
+
+            o <<= bitPos;
+            ++bytePos;
+            o |= (byte)(Data[bytePos] >> (8 - bitPos));
+            return o;
         }
 
         public float UnpackFixed(bool signed, int intBits, int fracBits)
         {
-            int minVal;
-            int maxVal;
-            int unsignedBits = intBits + fracBits;
-            int totalBits = unsignedBits;
-            float fixedVal;
-
+            int totalBits = intBits + fracBits;
             if (signed)
-            {
                 totalBits++;
 
-                minVal = 1 << intBits;
-                minVal *= -1;
+            int intVal = UnpackByte();
+            if (totalBits > 8)
+            {
+                intVal |= (UnpackByte() << 8);
+                if (totalBits > 16)
+                {
+                    intVal |= (UnpackByte() << 16);
+                    intVal |= (UnpackByte() << 24);
+                }
             }
-            maxVal = 1 << intBits;
 
-            if (totalBits <= 8)
-                fixedVal = (float)UnpackByte();
-            else if (totalBits <= 16)
-                fixedVal = (float)UnpackUBits(16);
-            else if (totalBits <= 31)
-                fixedVal = (float)UnpackUBits(32);
-            else
-                return 0.0f;
+            if(intVal == 0)
+                return 0f;
 
-            fixedVal /= (float)(1 << fracBits);
+            float fixedVal = intVal;
+            fixedVal /= (1 << fracBits);
 
-            if (signed) fixedVal -= (float)maxVal;
+            if (signed) fixedVal -= (1 << intBits);
 
             return fixedVal;
         }
@@ -323,46 +342,98 @@ namespace OpenMetaverse
         private void PackBitArray(byte[] data, int totalCount)
         {
             int count = 0;
-            int curBytePos = 0;
-            int curBitPos = 0;
-
-            while (totalCount > 0)
+            while(totalCount > 8)
             {
-                if (totalCount > MAX_BITS)
+                PackBitsFromByte(data[count]);
+                ++count;
+                totalCount -= 8;
+            }
+            if(totalCount > 0)
+                PackBitsFromByte(data[count], totalCount);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void PackBitsFromByte(byte inbyte)
+        {
+            if(bitPos == 0)
+            {
+                Data[bytePos++] = inbyte;
+                if (bytePos < Data.Length)
+                    Data[bytePos] = 0;
+                return;
+            }
+            if (inbyte == 0)
+            {
+                ++bytePos;
+                Data[bytePos] = 0;
+                return;
+            }
+            Data[bytePos++] |= (byte)(inbyte >> bitPos);
+            Data[bytePos] = (byte)(inbyte << (8 - bitPos));
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void PackBitsFromByte(byte inbyte, int count)
+        {
+            if (count > 8) //should not happen
+                count = 7;
+            else
+                count = count - 1;
+
+            while (count >= 0)
+            {
+                if ((inbyte & (0x01 << count)) != 0)
+                    Data[bytePos] |= (byte)(0x80 >> bitPos);
+
+                --count;
+                ++bitPos;
+
+                if (bitPos >= MAX_BITS)
                 {
-                    count = MAX_BITS;
-                    totalCount -= MAX_BITS;
+                    bitPos = 0;
+                    ++bytePos;
+                    if (bytePos < Data.Length)
+                        Data[bytePos] = 0;
                 }
-                else
-                {
-                    count = totalCount;
-                    totalCount = 0;
-                }
+            }
+        }
 
-                while (count > 0)
-                {
-                    byte curBit = (byte)(0x80 >> bitPos);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void PackBitFromBit(byte inbyte)
+        {
+            if ((inbyte & 0x01) != 0)
+                Data[bytePos] |= (byte)(0x80 >> bitPos);
 
-                    if ((data[curBytePos] & (0x01 << (count - 1))) != 0)
-                        Data[bytePos] |= curBit;
-                    else
-                        Data[bytePos] &= (byte)~curBit;
+            ++bitPos;
 
-                    --count;
-                    ++bitPos;
-                    ++curBitPos;
+            if (bitPos >= MAX_BITS)
+            {
+                bitPos = 0;
+                ++bytePos;
+                if (bytePos < Data.Length)
+                    Data[bytePos] = 0;
+            }
+        }
 
-                    if (bitPos >= MAX_BITS)
-                    {
-                        bitPos = 0;
-                        ++bytePos;
-                    }
-                    if (curBitPos >= MAX_BITS)
-                    {
-                        curBitPos = 0;
-                        ++curBytePos;
-                    }
-                }
+        /// <summary>
+        /// Pack a single bit in to the data
+        /// </summary>
+        /// <param name="bit">Bit to pack</param>
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void PackBit(bool bit)
+        {
+            if (bit)
+                Data[bytePos] |= (byte)(0x80 >> bitPos);
+
+            ++bitPos;
+
+            if (bitPos >= MAX_BITS)
+            {
+                bitPos = 0;
+                ++bytePos;
+                if (bytePos < Data.Length)
+                    Data[bytePos] = 0;
             }
         }
 

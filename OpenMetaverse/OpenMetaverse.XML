@@ -717,6 +717,9 @@
         <member name="F:OpenMetaverse.TeleportFlags.FinishedViaSameSim">
             <summary>Finished, Same Sim</summary>
         </member>
+        <member name="F:OpenMetaverse.TeleportFlags.ViaHGLogin">
+            <summary>Agent coming into the grid from another grid</summary>
+        </member>
         <member name="T:OpenMetaverse.TeleportLureFlags">
             <summary>
             
@@ -5694,13 +5697,13 @@
         <member name="F:OpenMetaverse.BitPack.Data">
             <summary></summary>
         </member>
-        <member name="P:OpenMetaverse.BitPack.BytePos">
+        <member name="F:OpenMetaverse.BitPack.bytePos">
             <summary></summary>
         </member>
-        <member name="P:OpenMetaverse.BitPack.BitPos">
+        <member name="F:OpenMetaverse.BitPack.bitPos">
             <summary></summary>
         </member>
-        <member name="M:OpenMetaverse.BitPack.#ctor(System.Byte[],System.Int32)">
+        <member name="M:OpenMetaverse.BitPack.#ctor(System.Byte[],System.Int32,System.Int32)">
             <summary>
             Default constructor, initialize the bit packer / bit unpacker
             with a byte array and starting position
@@ -5727,12 +5730,6 @@
             </summary>
             <param name="data">Unsigned integer containing the data to pack</param>
             <param name="totalCount">Number of bits of the integer to pack</param>
-        </member>
-        <member name="M:OpenMetaverse.BitPack.PackBit(System.Boolean)">
-            <summary>
-            Pack a single bit in to the data
-            </summary>
-            <param name="bit">Bit to pack</param>
         </member>
         <member name="M:OpenMetaverse.BitPack.PackFixed(System.Single,System.Boolean,System.Int32,System.Int32)">
             <summary>
@@ -5801,6 +5798,12 @@
             Unpack a 32-bit unsigned integer
             </summary>
             <returns>32-bit unsigned integer</returns>
+        </member>
+        <member name="M:OpenMetaverse.BitPack.PackBit(System.Boolean)">
+            <summary>
+            Pack a single bit in to the data
+            </summary>
+            <param name="bit">Bit to pack</param>
         </member>
         <member name="T:OpenMetaverse.BinBVHAnimationReader">
             <summary>
@@ -7127,6 +7130,9 @@
         <member name="T:OpenMetaverse.Packets.AlertMessagePacket.AlertInfoBlock">
             <exclude/>
         </member>
+        <member name="T:OpenMetaverse.Packets.AlertMessagePacket.AgentInfoBlock">
+            <exclude/>
+        </member>
         <member name="T:OpenMetaverse.Packets.AgentAlertMessagePacket">
             <exclude/>
         </member>
@@ -7956,6 +7962,9 @@
             <exclude/>
         </member>
         <member name="T:OpenMetaverse.Packets.ImprovedInstantMessagePacket.MessageBlockBlock">
+            <exclude/>
+        </member>
+        <member name="T:OpenMetaverse.Packets.ImprovedInstantMessagePacket.EstateBlockBlock">
             <exclude/>
         </member>
         <member name="T:OpenMetaverse.Packets.RetrieveInstantMessagesPacket">
@@ -9224,6 +9233,30 @@
         <member name="T:OpenMetaverse.Packets.LinkInventoryItemPacket.InventoryBlockBlock">
             <exclude/>
         </member>
+        <member name="T:OpenMetaverse.Packets.RetrieveIMsExtendedPacket">
+            <exclude/>
+        </member>
+        <member name="T:OpenMetaverse.Packets.RetrieveIMsExtendedPacket.AgentDataBlock">
+            <exclude/>
+        </member>
+        <member name="T:OpenMetaverse.Packets.JoinGroupRequestExtendedPacket">
+            <exclude/>
+        </member>
+        <member name="T:OpenMetaverse.Packets.JoinGroupRequestExtendedPacket.AgentDataBlock">
+            <exclude/>
+        </member>
+        <member name="T:OpenMetaverse.Packets.JoinGroupRequestExtendedPacket.GroupDataBlock">
+            <exclude/>
+        </member>
+        <member name="T:OpenMetaverse.Packets.CreateGroupRequestExtendedPacket">
+            <exclude/>
+        </member>
+        <member name="T:OpenMetaverse.Packets.CreateGroupRequestExtendedPacket.AgentDataBlock">
+            <exclude/>
+        </member>
+        <member name="T:OpenMetaverse.Packets.CreateGroupRequestExtendedPacket.GroupDataBlock">
+            <exclude/>
+        </member>
         <member name="T:OpenMetaverse.Packets.PacketAckPacket">
             <exclude/>
         </member>
@@ -9545,6 +9578,9 @@
         <member name="T:OpenMetaverse.Packets.ParcelPropertiesPacket.AgeVerificationBlockBlock">
             <exclude/>
         </member>
+        <member name="T:OpenMetaverse.Packets.ParcelPropertiesPacket.RegionAllowAccessBlockBlock">
+            <exclude/>
+        </member>
         <member name="T:OpenMetaverse.Packets.ChildAgentUpdatePacket">
             <exclude/>
         </member>
@@ -9572,6 +9608,9 @@
         <member name="T:OpenMetaverse.Packets.ChildAgentUpdatePacket.AgentInfoBlock">
             <exclude/>
         </member>
+        <member name="T:OpenMetaverse.Packets.ChildAgentUpdatePacket.AgentInventoryHostBlock">
+            <exclude/>
+        </member>
         <member name="T:OpenMetaverse.Packets.ChildAgentAlivePacket">
             <exclude/>
         </member>
@@ -9588,6 +9627,15 @@
             <exclude/>
         </member>
         <member name="T:OpenMetaverse.Packets.SoundTriggerPacket.SoundDataBlock">
+            <exclude/>
+        </member>
+        <member name="T:OpenMetaverse.Packets.ObjectAnimationPacket">
+            <exclude/>
+        </member>
+        <member name="T:OpenMetaverse.Packets.ObjectAnimationPacket.SenderBlock">
+            <exclude/>
+        </member>
+        <member name="T:OpenMetaverse.Packets.ObjectAnimationPacket.AnimationListBlock">
             <exclude/>
         </member>
         <member name="P:OpenMetaverse.CoordinateFrame.Origin">
@@ -13713,14 +13761,6 @@
              </code>
              </example>
         </member>
-        <member name="M:OpenMetaverse.Helpers.DecompressOSD(System.Byte[])">
-            <summary>
-            decompresses a gzipped OSD object
-            </summary>
-            <param name="decodedOsd"></param> the OSD object
-            <param name="meshBytes"></param>
-            <returns></returns>
-        </member>
         <member name="T:OpenMetaverse.InternalDictionary`2">
             <summary>
             The InternalDictionary class is used through the library for storing key/value pairs.
@@ -16028,6 +16068,13 @@
             LoginParams and the initial login XmlRpcRequest were made on a remote machine.
             This method now initializes libomv with the results.
             </summary>
+        </member>
+        <member name="M:OpenMetaverse.NetworkManager.LoginReplyXmlRpcHandler(Nwc.XmlRpc.XmlRpcResponse,OpenMetaverse.UUID)">
+            <summary>
+            Connect to the simulator after the successful remote XMLRPC login attempt.
+            </summary>
+            <param name="response"></param>
+            <param name="loginID"></param>
         </member>
         <member name="M:OpenMetaverse.NetworkManager.LoginReplyXmlRpcHandler(Nwc.XmlRpc.XmlRpcResponse,OpenMetaverse.LoginParams)">
             <summary>
@@ -35919,12 +35966,6 @@
             methods in TextureEntry
             </summary>
         </member>
-        <member name="P:OpenMetaverse.Primitive.TextureEntryFace.material">
-            <summary></summary>
-        </member>
-        <member name="P:OpenMetaverse.Primitive.TextureEntryFace.media">
-            <summary></summary>
-        </member>
         <member name="P:OpenMetaverse.Primitive.TextureEntryFace.RGBA">
             <summary></summary>
         </member>
@@ -36034,7 +36075,7 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="M:OpenMetaverse.Primitive.TextureEntry.GetBytes">
+        <member name="M:OpenMetaverse.Primitive.TextureEntry.GetBytes(System.Int32)">
             <summary>
             
             </summary>
