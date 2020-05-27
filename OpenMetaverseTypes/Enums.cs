@@ -103,6 +103,8 @@ namespace OpenMetaverse
         MarketplaceFolder = 26,
         /// <summary>Linden mesh format</summary>
         Mesh = 49,
+
+        Settings = 56
     }
 
     /// <summary>
@@ -166,6 +168,8 @@ namespace OpenMetaverse
         MarketplaceListings = 53,
         /// <summary>Marketplace stock folder</summary>
         MarkplaceStock = 54,
+        /// <summary>Settings folder</summary>
+        Settings = 56,
         /// <summary>Hypergrid Suitcase folder</summary>
         Suitcase = 100
     }
@@ -230,6 +234,8 @@ namespace OpenMetaverse
 
         /// <summary></summary>
         Mesh = 22,
+
+        Settings = 25,
     }
 
     /// <summary>

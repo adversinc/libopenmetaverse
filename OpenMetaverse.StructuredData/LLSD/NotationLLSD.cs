@@ -77,7 +77,21 @@ namespace OpenMetaverse.StructuredData
         {
             StringReader reader = new StringReader(notationData);
             OSD osd = DeserializeLLSDNotation(reader);
-            reader.Close();
+            reader.Dispose();
+            return osd;
+        }
+
+        public static OSD DeserializeLLSDNotation(byte[] xmlData)
+        {
+            using (StreamReader xrd = new StreamReader(new MemoryStream(xmlData, false)))
+                return DeserializeLLSDNotationElement(xrd);
+        }
+
+        public static OSD DeserializeLLSDNotation(Stream sreader)
+        {
+            OSD osd;
+            using (StreamReader reader = new StreamReader(sreader))
+                 osd = DeserializeLLSDNotationElement(reader);
             return osd;
         }
 
@@ -91,9 +105,19 @@ namespace OpenMetaverse.StructuredData
         {
             StringWriter writer = SerializeLLSDNotationStream(osd);
             string s = writer.ToString();
-            writer.Close();
+            writer.Dispose();
 
             return s;
+        }
+
+        public static string SerializeLLSDNotationFull(OSD osd)
+        {
+            using(StringWriter writer = new StringWriter())
+            {
+                writer.Write("<?llsd/notation?>");
+                SerializeLLSDNotationElement(writer, osd);
+                return writer.ToString();
+            }
         }
 
         public static StringWriter SerializeLLSDNotationStream(OSD osd)
@@ -127,7 +151,7 @@ namespace OpenMetaverse.StructuredData
         /// </summary>
         /// <param name="reader"></param>
         /// <returns></returns>
-        private static OSD DeserializeLLSDNotationElement(StringReader reader)
+        private static OSD DeserializeLLSDNotationElement(TextReader reader)
         {
             int character = ReadAndSkipWhitespace(reader);
             if (character < 0)
@@ -272,7 +296,7 @@ namespace OpenMetaverse.StructuredData
             return osd;
         }
 
-        private static OSD DeserializeLLSDNotationInteger(StringReader reader)
+        private static OSD DeserializeLLSDNotationInteger(TextReader reader)
         {
             int character;
             StringBuilder s = new StringBuilder();
@@ -295,12 +319,12 @@ namespace OpenMetaverse.StructuredData
             return OSD.FromInteger(integer);
         }
 
-        private static OSD DeserializeLLSDNotationReal(StringReader reader)
+        private static OSD DeserializeLLSDNotationReal(TextReader reader)
         {
             int character;
             StringBuilder s = new StringBuilder();
             if (((character = reader.Peek()) > 0) &&
-                ((char)character == '-' && (char)character == '+'))
+                ((char)character == '-' || (char)character == '+'))
             {
                 s.Append((char)character);
                 reader.Read();
@@ -320,22 +344,29 @@ namespace OpenMetaverse.StructuredData
             return OSD.FromReal(dbl);
         }
 
-        private static OSD DeserializeLLSDNotationArray(StringReader reader)
+        private static OSD DeserializeLLSDNotationArray(TextReader reader)
         {
             int character;
             OSDArray osdArray = new OSDArray();
-            while (((character = PeekAndSkipWhitespace(reader)) > 0) &&
-                  ((char)character != arrayEndNotationMarker))
+            while (((character = PeekAndSkipWhitespace(reader)) > 0))
             {
-                osdArray.Add(DeserializeLLSDNotationElement(reader));
+                 if((char)character == arrayEndNotationMarker)
+                 {
+                     reader.Read();
+                     break;
+                 }
+                 else
+                 {
+                    osdArray.Add(DeserializeLLSDNotationElement(reader));
 
-                character = ReadAndSkipWhitespace(reader);
-                if (character < 0)
-                    throw new OSDException("Notation LLSD parsing: Unexpected end of array discovered.");
-                else if ((char)character == kommaNotationDelimiter)
-                    continue;
-                else if ((char)character == arrayEndNotationMarker)
-                    break;
+                    character = ReadAndSkipWhitespace(reader);
+                    if (character < 0)
+                        throw new OSDException("Notation LLSD parsing: Unexpected end of array discovered.");
+                    else if ((char)character == kommaNotationDelimiter)
+                        continue;
+                    else if ((char)character == arrayEndNotationMarker)
+                        break;
+                 }
             }
             if (character < 0)
                 throw new OSDException("Notation LLSD parsing: Unexpected end of array discovered.");
@@ -343,32 +374,39 @@ namespace OpenMetaverse.StructuredData
             return (OSD)osdArray;
         }
 
-        private static OSD DeserializeLLSDNotationMap(StringReader reader)
+        private static OSD DeserializeLLSDNotationMap(TextReader reader)
         {
             int character;
             OSDMap osdMap = new OSDMap();
-            while (((character = PeekAndSkipWhitespace(reader)) > 0) &&
-                  ((char)character != mapEndNotationMarker))
+            while (((character = PeekAndSkipWhitespace(reader)) > 0))
             {
-                OSD osdKey = DeserializeLLSDNotationElement(reader);
-                if (osdKey.Type != OSDType.String)
-                    throw new OSDException("Notation LLSD parsing: Invalid key in map");
-                string key = osdKey.AsString();
-
-                character = ReadAndSkipWhitespace(reader);
-                if ((char)character != keyNotationDelimiter)
-                    throw new OSDException("Notation LLSD parsing: Unexpected end of stream in map.");
-                if ((char)character != keyNotationDelimiter)
-                    throw new OSDException("Notation LLSD parsing: Invalid delimiter in map.");
-
-                osdMap[key] = DeserializeLLSDNotationElement(reader);
-                character = ReadAndSkipWhitespace(reader);
-                if (character < 0)
-                    throw new OSDException("Notation LLSD parsing: Unexpected end of map discovered.");
-                else if ((char)character == kommaNotationDelimiter)
-                    continue;
-                else if ((char)character == mapEndNotationMarker)
+                if ((char)character == mapEndNotationMarker)
+                {
+                    reader.Read();
                     break;
+                }
+                else
+                {
+                    OSD osdKey = DeserializeLLSDNotationElement(reader);
+                    if (osdKey.Type != OSDType.String)
+                        throw new OSDException("Notation LLSD parsing: Invalid key in map");
+                    string key = osdKey.AsString();
+
+                    character = ReadAndSkipWhitespace(reader);
+                    if ((char)character != keyNotationDelimiter)
+                        throw new OSDException("Notation LLSD parsing: Unexpected end of stream in map.");
+                    if ((char)character != keyNotationDelimiter)
+                        throw new OSDException("Notation LLSD parsing: Invalid delimiter in map.");
+
+                    osdMap[key] = DeserializeLLSDNotationElement(reader);
+                    character = ReadAndSkipWhitespace(reader);
+                    if (character < 0)
+                        throw new OSDException("Notation LLSD parsing: Unexpected end of map discovered.");
+                    else if ((char)character == kommaNotationDelimiter)
+                        continue;
+                    else if ((char)character == mapEndNotationMarker)
+                        break;
+                }
             }
             if (character < 0)
                 throw new OSDException("Notation LLSD parsing: Unexpected end of map discovered.");
@@ -411,7 +449,7 @@ namespace OpenMetaverse.StructuredData
                     writer.Write(binaryNotationMarker);
                     writer.Write("64");
                     writer.Write(doubleQuotesNotationMarker);
-                    writer.Write(osd.AsString());
+                    base64Encode(osd.AsBinary(), writer);
                     writer.Write(doubleQuotesNotationMarker);
                     break;
                 case OSDType.Date:
@@ -435,6 +473,49 @@ namespace OpenMetaverse.StructuredData
                 default:
                     throw new OSDException("Notation serialization: Not existing element discovered.");
 
+            }
+        }
+
+        public static unsafe void base64Encode(byte[] data, TextWriter tw)
+        {
+            int lenMod3 = data.Length % 3;
+            int len = data.Length - lenMod3;
+
+            fixed (byte* d = data)
+            {
+                fixed (char* b64 = base64Chars)
+                {
+                    int i = 0;
+                    while (i < len)
+                    {
+                        tw.Write(b64[d[i] >> 2]);
+                        tw.Write(b64[((d[i] & 0x03) << 4) | ((d[i + 1] & 0xf0) >> 4)]);
+                        tw.Write(b64[((d[i + 1] & 0x0f) << 2) | ((d[i + 2] & 0xc0) >> 6)]);
+                        tw.Write(b64[d[i + 2] & 0x3f]);
+                        i += 3;
+                    }
+
+                    switch (lenMod3)
+                    {
+                        case 2:
+                        {
+                            i = len;
+                            tw.Write(b64[d[i] >> 2]);
+                            tw.Write(b64[((d[i] & 0x03) << 4) | ((d[i + 1] & 0xf0) >> 4)]);
+                            tw.Write(b64[((d[i + 1] & 0x0f) << 2)]);
+                            tw.Write('=');
+                            break;
+                        }
+                        case 1:
+                        {
+                            i = len;
+                            tw.Write(b64[d[i] >> 2]);
+                            tw.Write(b64[(d[i] & 0x03) << 4]);
+                            tw.Write("==");
+                            break;
+                        }
+                    }
+                }
             }
         }
 
@@ -592,7 +673,7 @@ namespace OpenMetaverse.StructuredData
         /// </summary>
         /// <param name="reader"></param>
         /// <returns></returns>
-        public static int PeekAndSkipWhitespace(StringReader reader)
+        public static int PeekAndSkipWhitespace(TextReader reader)
         {
             int character;
             while ((character = reader.Peek()) > 0)
@@ -614,7 +695,7 @@ namespace OpenMetaverse.StructuredData
         /// </summary>
         /// <param name="reader"></param>
         /// <returns></returns>
-        public static int ReadAndSkipWhitespace(StringReader reader)
+        public static int ReadAndSkipWhitespace(TextReader reader)
         {
             int character = PeekAndSkipWhitespace(reader);
             reader.Read();
@@ -626,7 +707,7 @@ namespace OpenMetaverse.StructuredData
         /// </summary>
         /// <param name="reader"></param>
         /// <returns></returns>
-        public static int GetLengthInBrackets(StringReader reader)
+        public static int GetLengthInBrackets(TextReader reader)
         {
             int character;
             StringBuilder s = new StringBuilder();
@@ -656,7 +737,7 @@ namespace OpenMetaverse.StructuredData
         /// <param name="reader"></param>
         /// <param name="delimiter"></param>
         /// <returns></returns>
-        public static string GetStringDelimitedBy(StringReader reader, char delimiter)
+        public static string GetStringDelimitedBy(TextReader reader, char delimiter)
         {
             int character;
             bool foundEscape = false;
@@ -717,7 +798,7 @@ namespace OpenMetaverse.StructuredData
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static int BufferCharactersEqual(StringReader reader, char[] buffer, int offset)
+        public static int BufferCharactersEqual(TextReader reader, char[] buffer, int offset)
         {
 
             int character;
