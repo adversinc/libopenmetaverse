@@ -9,7 +9,7 @@
     <AssemblyName>XMLRPC</AssemblyName>
     <ApplicationVersion>0.0.0.0</ApplicationVersion>
     <RootNamespace>Nwc.XmlRpc</RootNamespace>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <UpgradeBackupLocation>
