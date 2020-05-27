@@ -1425,6 +1425,12 @@ namespace OpenMetaverse
             return UInt16ToFloat(val, lower, upper);
         }
 
+				public static float UInt16ToFloat(byte[] bytes, int pos, float lower, float upper)
+        {
+            ushort val = BytesToUInt16(bytes, pos);
+            return UInt16ToFloat(val, lower, upper);
+        }
+
         public static float UInt16ToFloat(ushort val, float lower, float upper)
         {
             const float ONE_OVER_U16_MAX = 1.0f / UInt16.MaxValue;
