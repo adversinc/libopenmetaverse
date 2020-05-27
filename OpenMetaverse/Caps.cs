@@ -223,6 +223,10 @@ namespace OpenMetaverse
 			req.Add("ViewerStartAuction");
 			req.Add("ViewerStats");
 
+			// Missing from viewer, still used
+			req.Add("GetMesh");
+			req.Add("GetMesh2");
+
 
 			_SeedRequest = new CapsClient(new Uri(_SeedCapsURI));
 			_SeedRequest.OnComplete += new CapsClient.CompleteCallback(SeedRequestCompleteHandler);
