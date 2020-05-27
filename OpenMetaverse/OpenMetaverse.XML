@@ -1337,6 +1337,11 @@
             Request any instant messages sent while the client was offline to be resent.
             </summary>
         </member>
+        <member name="M:OpenMetaverse.AgentManager.RequestOfflineMessages">
+            <summary>
+            Request offline messages from sim
+            </summary>
+        </member>
         <member name="M:OpenMetaverse.AgentManager.InstantMessage(OpenMetaverse.UUID,System.String)">
             <summary>
             Send an Instant Message to another Avatar
@@ -4902,6 +4907,863 @@
         </member>
         <member name="P:OpenMetaverse.ImageReceiveProgressEventArgs.Total">
             <summary>Image size in bytes</summary>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetGeneric">
+            <summary>
+            Represents an asset which type is not important for us
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetGeneric.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetGeneric.#ctor">
+            <summary>Default Constructor</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetGeneric.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>
+            Construct an Asset object
+            </summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="T:OpenMetaverse.Assets.Asset">
+            <summary>
+            Base class for all Asset types
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.Asset.AssetData">
+            <summary>A byte array containing the raw asset data</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.Asset.Temporary">
+            <summary>True if the asset it only stored on the server temporarily</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.Asset._AssetID">
+            <summary>A unique ID</summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.Asset.AssetID">
+            <summary>The assets unique ID</summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.Asset.AssetType">
+            <summary>
+            The "type" of asset, Notecard, Animation, etc
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.Asset.#ctor">
+            <summary>
+            Construct a new Asset object
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.Asset.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>
+            Construct a new Asset object
+            </summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.Asset.Encode">
+            <summary>
+            Regenerates the <code>AssetData</code> byte array from the properties 
+            of the derived class.
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.Asset.Decode">
+            <summary>
+            Decodes the AssetData, placing it in appropriate properties of the derived
+            class.
+            </summary>
+            <returns>True if the asset decoding succeeded, otherwise false</returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.ArchiveConstants">
+            <summary>
+            Constants for the archiving module
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.ArchiveConstants.CONTROL_FILE_PATH">
+            <summary>
+            The location of the archive control file
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.ArchiveConstants.ASSETS_PATH">
+            <summary>
+            Path for the assets held in an archive
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.ArchiveConstants.OBJECTS_PATH">
+            <summary>
+            Path for the prims file
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.ArchiveConstants.TERRAINS_PATH">
+            <summary>
+            Path for terrains.  Technically these may be assets, but I think it's quite nice to split them out.
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.ArchiveConstants.SETTINGS_PATH">
+            <summary>
+            Path for region settings.
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.ArchiveConstants.LANDDATA_PATH">
+            <value>
+              Path for region settings.
+            </value>
+        </member>
+        <member name="F:OpenMetaverse.Assets.ArchiveConstants.ASSET_EXTENSION_SEPARATOR">
+            <summary>
+            The character the separates the uuid from extension information in an archived asset filename
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.ArchiveConstants.ASSET_TYPE_TO_EXTENSION">
+            <summary>
+            Extensions used for asset types in the archive
+            </summary>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetsArchiver">
+            <summary>
+            Archives assets
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetsArchiver.m_assets">
+            <summary>
+            Archive assets
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetsArchiver.Archive(OpenMetaverse.Assets.TarArchiveWriter)">
+            <summary>
+            Archive the assets given to this archiver to the given archive.
+            </summary>
+            <param name="archive"></param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetsArchiver.WriteMetadata(OpenMetaverse.Assets.TarArchiveWriter)">
+            <summary>
+            Write an assets metadata file to the given archive
+            </summary>
+            <param name="archive"></param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetsArchiver.WriteData(OpenMetaverse.Assets.TarArchiveWriter)">
+            <summary>
+            Write asset data files to the given archive
+            </summary>
+            <param name="archive"></param>
+        </member>
+        <member name="T:OpenMetaverse.Assets.TarArchiveReader">
+            <summary>
+            Temporary code to do the bare minimum required to read a tar archive for our purposes
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.TarArchiveReader.m_br">
+            <summary>
+            Binary reader for the underlying stream
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.TarArchiveReader.m_nullCharArray">
+            <summary>
+            Used to trim off null chars
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.TarArchiveReader.m_spaceCharArray">
+            <summary>
+            Used to trim off space chars
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.TarArchiveReader.#ctor(System.IO.Stream)">
+            <summary>
+            Generate a tar reader which reads from the given stream.
+            </summary>
+            <param name="s"></param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.TarArchiveReader.ReadEntry(System.String@,OpenMetaverse.Assets.TarArchiveReader.TarEntryType@)">
+            <summary>
+            Read the next entry in the tar file.
+            </summary>
+            <param name="filePath"></param>
+            <param name="entryType"></param>
+            <returns>the data for the entry.  Returns null if there are no more entries</returns>
+        </member>
+        <member name="M:OpenMetaverse.Assets.TarArchiveReader.ReadHeader">
+            <summary>
+            Read the next 512 byte chunk of data as a tar header.
+            </summary>
+            <returns>A tar header struct.  null if we have reached the end of the archive.</returns>
+        </member>
+        <member name="M:OpenMetaverse.Assets.TarArchiveReader.ReadData(System.Int32)">
+            <summary>
+            Read data following a header
+            </summary>
+            <param name="fileSize"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OpenMetaverse.Assets.TarArchiveReader.ConvertOctalBytesToDecimal(System.Byte[],System.Int32,System.Int32)">
+            <summary>
+            Convert octal bytes to a decimal representation
+            </summary>
+            <param name="bytes"></param>
+            <param name="count"></param>
+            <param name="startIndex"></param>
+            <returns></returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.TarArchiveWriter">
+            <summary>
+            Temporary code to produce a tar archive in tar v7 format
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.TarArchiveWriter.m_bw">
+            <summary>
+            Binary writer for the underlying stream
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.TarArchiveWriter.WriteDir(System.String)">
+            <summary>
+            Write a directory entry to the tar archive.  We can only handle one path level right now!
+            </summary>
+            <param name="dirName"></param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.TarArchiveWriter.WriteFile(System.String,System.String)">
+            <summary>
+            Write a file to the tar archive
+            </summary>
+            <param name="filePath"></param>
+            <param name="data"></param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.TarArchiveWriter.WriteFile(System.String,System.Byte[])">
+            <summary>
+            Write a file to the tar archive
+            </summary>
+            <param name="filePath"></param>
+            <param name="data"></param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.TarArchiveWriter.Close">
+            <summary>
+            Finish writing the raw tar archive data to a stream.  The stream will be closed on completion.
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.TarArchiveWriter.WriteEntry(System.String,System.Byte[],System.Char)">
+            <summary>
+            Write a particular entry
+            </summary>
+            <param name="filePath"></param>
+            <param name="data"></param>
+            <param name="fileType"></param>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetAnimation">
+            <summary>
+            Represents an Animation
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetAnimation.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetAnimation.#ctor">
+            <summary>Default Constructor</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetAnimation.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>
+            Construct an Asset object of type Animation
+            </summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetBodypart">
+            <summary>
+            Represents an <seealso cref="T:OpenMetaverse.Assets.AssetWearable"/> that represents an avatars body ie: Hair, Etc.
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetBodypart.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetBodypart.#ctor">
+            <summary>Initializes a new instance of an AssetBodyPart object</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetBodypart.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>Initializes a new instance of an AssetBodyPart object with parameters</summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetCallingCard">
+            <summary>
+            Represents a Callingcard with AvatarID and Position vector
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetCallingCard.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetCallingCard.AvatarID">
+            <summary>UUID of the Callingcard target avatar</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetCallingCard.#ctor">
+            <summary>Construct an Asset of type Callingcard</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetCallingCard.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>
+            Construct an Asset object of type Callingcard
+            </summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetCallingCard.#ctor(OpenMetaverse.UUID)">
+            <summary>
+            Constuct an asset of type Callingcard
+            </summary>
+            <param name="avatarID">UUID of the target avatar</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetCallingCard.Encode">
+            <summary>
+            Encode the raw contents of a string with the specific Callingcard format
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetCallingCard.Decode">
+            <summary>
+            Decode the raw asset data, populating the AvatarID and Position
+            </summary>
+            <returns>true if the AssetData was successfully decoded to a UUID and Vector</returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetClothing">
+            <summary>
+            Represents an <seealso cref="T:OpenMetaverse.Assets.AssetWearable"/> that can be worn on an avatar
+            such as a Shirt, Pants, etc.
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetClothing.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetClothing.#ctor">
+            <summary>Initializes a new instance of an AssetScriptBinary object</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetClothing.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>Initializes a new instance of an AssetScriptBinary object with parameters</summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="T:OpenMetaverse.Assets.GestureStepType">
+            <summary>
+            Type of gesture step
+            </summary>
+        </member>
+        <member name="T:OpenMetaverse.Assets.GestureStep">
+            <summary>
+            Base class for gesture steps
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.GestureStep.GestureStepType">
+            <summary>
+            Retururns what kind of gesture step this is
+            </summary>
+        </member>
+        <member name="T:OpenMetaverse.Assets.GestureStepAnimation">
+            <summary>
+            Describes animation step of a gesture
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.GestureStepAnimation.GestureStepType">
+            <summary>
+            Returns what kind of gesture step this is
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.GestureStepAnimation.AnimationStart">
+            <summary>
+            If true, this step represents start of animation, otherwise animation stop
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.GestureStepAnimation.ID">
+            <summary>
+            Animation asset <see cref="T:OpenMetaverse.UUID"/>
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.GestureStepAnimation.Name">
+            <summary>
+            Animation inventory name
+            </summary>
+        </member>
+        <member name="T:OpenMetaverse.Assets.GestureStepSound">
+            <summary>
+            Describes sound step of a gesture
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.GestureStepSound.GestureStepType">
+            <summary>
+            Returns what kind of gesture step this is
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.GestureStepSound.ID">
+            <summary>
+            Sound asset <see cref="T:OpenMetaverse.UUID"/>
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.GestureStepSound.Name">
+            <summary>
+            Sound inventory name
+            </summary>
+        </member>
+        <member name="T:OpenMetaverse.Assets.GestureStepChat">
+            <summary>
+            Describes sound step of a gesture
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.GestureStepChat.GestureStepType">
+            <summary>
+            Returns what kind of gesture step this is
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.GestureStepChat.Text">
+            <summary>
+            Text to output in chat
+            </summary>
+        </member>
+        <member name="T:OpenMetaverse.Assets.GestureStepWait">
+            <summary>
+            Describes sound step of a gesture
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.GestureStepWait.GestureStepType">
+            <summary>
+            Returns what kind of gesture step this is
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.GestureStepWait.WaitForAnimation">
+            <summary>
+            If true in this step we wait for all animations to finish
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.GestureStepWait.WaitForTime">
+            <summary>
+            If true gesture player should wait for the specified amount of time
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.GestureStepWait.WaitTime">
+            <summary>
+            Time in seconds to wait if WaitForAnimation is false
+            </summary>
+        </member>
+        <member name="T:OpenMetaverse.Assets.GestureStepEOF">
+            <summary>
+            Describes the final step of a gesture
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.GestureStepEOF.GestureStepType">
+            <summary>
+            Returns what kind of gesture step this is
+            </summary>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetGesture">
+            <summary>
+            Represents a sequence of animations, sounds, and chat actions
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetGesture.AssetType">
+            <summary>
+            Returns asset type
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetGesture.TriggerKey">
+            <summary>
+            Keyboard key that triggers the gestyre
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetGesture.TriggerKeyMask">
+            <summary>
+            Modifier to the trigger key
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetGesture.Trigger">
+            <summary>
+            String that triggers playing of the gesture sequence
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetGesture.ReplaceWith">
+            <summary>
+            Text that replaces trigger in chat once gesture is triggered
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetGesture.Sequence">
+            <summary>
+            Sequence of gesture steps
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetGesture.#ctor">
+            <summary>
+            Constructs guesture asset
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetGesture.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>
+            Constructs guesture asset
+            </summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetGesture.Encode">
+            <summary>
+            Encodes gesture asset suitable for uplaod
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetGesture.Decode">
+            <summary>
+            Decodes gesture assset into play sequence
+            </summary>
+            <returns>true if the asset data was decoded successfully</returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetLandmark">
+            <summary>
+            Represents a Landmark with RegionID and Position vector
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetLandmark.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetLandmark.RegionID">
+            <summary>UUID of the Landmark target region</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetLandmark.Position">
+            <summary> Local position of the target </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetLandmark.#ctor">
+            <summary>Construct an Asset of type Landmark</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetLandmark.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>
+            Construct an Asset object of type Landmark
+            </summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetLandmark.Encode">
+            <summary>
+            Encode the raw contents of a string with the specific Landmark format
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetLandmark.Decode">
+            <summary>
+            Decode the raw asset data, populating the RegionID and Position
+            </summary>
+            <returns>true if the AssetData was successfully decoded to a UUID and Vector</returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetMesh">
+            <summary>
+            Represents Mesh asset
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetMesh.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetMesh.MeshData">
+            <summary>
+            Decoded mesh data
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetMesh.#ctor">
+            <summary>Initializes a new instance of an AssetMesh object</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetMesh.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>Initializes a new instance of an AssetMesh object with parameters</summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetMesh.Encode">
+            <summary>
+            TODO: Encodes Collada file into LLMesh format
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetMesh.Decode">
+            <summary>
+            Decodes mesh asset. See <see cref="M:OpenMetaverse.Rendering.FacetedMesh.TryDecodeFromAsset(OpenMetaverse.Primitive,OpenMetaverse.Assets.AssetMesh,OpenMetaverse.Rendering.DetailLevel,OpenMetaverse.Rendering.FacetedMesh@)"/>
+            to furter decode it for rendering</summary>
+            <returns>true</returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetMutable">
+            <summary>
+            Represents an Animation
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetMutable.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetMutable.#ctor(OpenMetaverse.AssetType)">
+            <summary>Default Constructor</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetMutable.#ctor(OpenMetaverse.AssetType,OpenMetaverse.UUID,System.Byte[])">
+            <summary>
+            Construct an Asset object of type Animation
+            </summary>
+            <param name="type">Asset type</param>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetNotecard">
+            <summary>
+            Represents a string of characters encoded with specific formatting properties
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetNotecard.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetNotecard.BodyText">
+            <summary>A text string containing main text of the notecard</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetNotecard.EmbeddedItems">
+            <summary>List of <see cref="T:OpenMetaverse.InventoryItem"/>s embedded on the notecard</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetNotecard.#ctor">
+            <summary>Construct an Asset of type Notecard</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetNotecard.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>
+            Construct an Asset object of type Notecard
+            </summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetNotecard.Encode">
+            <summary>
+            Encode the raw contents of a string with the specific Linden Text properties
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetNotecard.Decode">
+            <summary>
+            Decode the raw asset data including the Linden Text properties
+            </summary>
+            <returns>true if the AssetData was successfully decoded</returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetPrim">
+            <summary>
+            A linkset asset, containing a parent primitive and zero or more children
+            </summary>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetPrim.ProfileShape">
+            <summary>
+            Only used internally for XML serialization/deserialization
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetPrim.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetPrim.#ctor">
+            <summary>Initializes a new instance of an AssetPrim object</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetPrim.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>
+            Initializes a new instance of an AssetPrim object
+            </summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetPrim.Encode">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetPrim.Decode">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.PrimObject">
+            <summary>
+            The deserialized form of a single primitive in a linkset asset
+            </summary>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetScriptBinary">
+            <summary>
+            Represents an AssetScriptBinary object containing the 
+            LSO compiled bytecode of an LSL script
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetScriptBinary.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetScriptBinary.#ctor">
+            <summary>Initializes a new instance of an AssetScriptBinary object</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetScriptBinary.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>Initializes a new instance of an AssetScriptBinary object with parameters</summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetScriptBinary.Encode">
+            <summary>
+            TODO: Encodes a scripts contents into a LSO Bytecode file
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetScriptBinary.Decode">
+            <summary>
+            TODO: Decode LSO Bytecode into a string
+            </summary>
+            <returns>true</returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetScriptText">
+            <summary>
+            Represents an LSL Text object containing a string of UTF encoded characters
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetScriptText.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetScriptText.Source">
+            <summary>A string of characters represting the script contents</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetScriptText.#ctor">
+            <summary>Initializes a new AssetScriptText object</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetScriptText.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>
+            Initializes a new AssetScriptText object with parameters
+            </summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetScriptText.Encode">
+            <summary>
+            Encode a string containing the scripts contents into byte encoded AssetData
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetScriptText.Decode">
+            <summary>
+            Decode a byte array containing the scripts contents into a string
+            </summary>
+            <returns>true if decoding is successful</returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetSound">
+            <summary>
+            Represents a Sound Asset
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetSound.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetSound.#ctor">
+            <summary>Initializes a new instance of an AssetSound object</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetSound.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>Initializes a new instance of an AssetSound object with parameters</summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetSound.Encode">
+            <summary>
+            TODO: Encodes a sound file
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetSound.Decode">
+            <summary>
+            TODO: Decode a sound file
+            </summary>
+            <returns>true</returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetTexture">
+            <summary>
+            Represents a texture
+            </summary>
+        </member>
+        <member name="P:OpenMetaverse.Assets.AssetTexture.AssetType">
+            <summary>Override the base classes AssetType</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetTexture.Image">
+            <summary>A <seealso cref="T:OpenMetaverse.Imaging.ManagedImage"/> object containing image data</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetTexture.LayerInfo">
+            <summary></summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetTexture.Components">
+            <summary></summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetTexture.#ctor">
+            <summary>Initializes a new instance of an AssetTexture object</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetTexture.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>
+            Initializes a new instance of an AssetTexture object
+            </summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetTexture.#ctor(OpenMetaverse.Imaging.ManagedImage)">
+            <summary>
+            Initializes a new instance of an AssetTexture object
+            </summary>
+            <param name="image">A <seealso cref="T:OpenMetaverse.Imaging.ManagedImage"/> object containing texture data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetTexture.Encode">
+            <summary>
+            Populates the <seealso cref="!:AssetData"/> byte array with a JPEG2000
+            encoded image created from the data in <seealso cref="F:OpenMetaverse.Assets.AssetTexture.Image"/>
+            </summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetTexture.Decode">
+            <summary>
+            Decodes the JPEG2000 data in <code>AssetData</code> to the
+            <seealso cref="T:OpenMetaverse.Imaging.ManagedImage"/> object <seealso cref="F:OpenMetaverse.Assets.AssetTexture.Image"/>
+            </summary>
+            <returns>True if the decoding was successful, otherwise false</returns>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetTexture.DecodeLayerBoundaries">
+            <summary>
+            Decodes the begin and end byte positions for each quality layer in
+            the image
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:OpenMetaverse.Assets.AssetWearable">
+            <summary>
+            Represents a Wearable Asset, Clothing, Hair, Skin, Etc
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.Name">
+            <summary>A string containing the name of the asset</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.Description">
+            <summary>A string containing a short description of the asset</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.WearableType">
+            <summary>The Assets WearableType</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.ForSale">
+            <summary>The For-Sale status of the object</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.SalePrice">
+            <summary>An Integer representing the purchase price of the asset</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.Creator">
+            <summary>The <seealso cref="T:OpenMetaverse.UUID"/> of the assets creator</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.Owner">
+            <summary>The <seealso cref="T:OpenMetaverse.UUID"/> of the assets current owner</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.LastOwner">
+            <summary>The <seealso cref="T:OpenMetaverse.UUID"/> of the assets prior owner</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.Group">
+            <summary>The <seealso cref="T:OpenMetaverse.UUID"/> of the Group this asset is set to</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.GroupOwned">
+            <summary>True if the asset is owned by a <seealso cref="F:OpenMetaverse.Assets.AssetWearable.Group"/></summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.Permissions">
+            <summary>The Permissions mask of the asset</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.Params">
+            <summary>A Dictionary containing Key/Value pairs of the objects parameters</summary>
+        </member>
+        <member name="F:OpenMetaverse.Assets.AssetWearable.Textures">
+            <summary>A Dictionary containing Key/Value pairs where the Key is the textures Index and the Value is the Textures <seealso cref="T:OpenMetaverse.UUID"/></summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetWearable.#ctor">
+            <summary>Initializes a new instance of an AssetWearable object</summary>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetWearable.#ctor(OpenMetaverse.UUID,System.Byte[])">
+            <summary>Initializes a new instance of an AssetWearable object with parameters</summary>
+            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
+            <param name="assetData">A byte array containing the raw asset data</param>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetWearable.Decode">
+            <summary>
+            Decode an assets byte encoded data to a string
+            </summary>
+            <returns>true if the asset data was decoded successfully</returns>
+        </member>
+        <member name="M:OpenMetaverse.Assets.AssetWearable.Encode">
+            <summary>
+            Encode the assets string represantion into a format consumable by the asset server
+            </summary>
         </member>
         <member name="T:OpenMetaverse.ProfileFlags">
             <summary>
@@ -21742,845 +22604,6 @@
         <member name="T:OpenMetaverse.VisualParams">
             <summary>
             Holds the Params array of all the avatar appearance parameters
-            </summary>
-        </member>
-        <member name="T:OpenMetaverse.Assets.Asset">
-            <summary>
-            Base class for all Asset types
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.Asset.AssetData">
-            <summary>A byte array containing the raw asset data</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.Asset.Temporary">
-            <summary>True if the asset it only stored on the server temporarily</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.Asset._AssetID">
-            <summary>A unique ID</summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.Asset.AssetID">
-            <summary>The assets unique ID</summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.Asset.AssetType">
-            <summary>
-            The "type" of asset, Notecard, Animation, etc
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.Asset.#ctor">
-            <summary>
-            Construct a new Asset object
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.Asset.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>
-            Construct a new Asset object
-            </summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.Asset.Encode">
-            <summary>
-            Regenerates the <code>AssetData</code> byte array from the properties 
-            of the derived class.
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.Asset.Decode">
-            <summary>
-            Decodes the AssetData, placing it in appropriate properties of the derived
-            class.
-            </summary>
-            <returns>True if the asset decoding succeeded, otherwise false</returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.ArchiveConstants">
-            <summary>
-            Constants for the archiving module
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.ArchiveConstants.CONTROL_FILE_PATH">
-            <summary>
-            The location of the archive control file
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.ArchiveConstants.ASSETS_PATH">
-            <summary>
-            Path for the assets held in an archive
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.ArchiveConstants.OBJECTS_PATH">
-            <summary>
-            Path for the prims file
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.ArchiveConstants.TERRAINS_PATH">
-            <summary>
-            Path for terrains.  Technically these may be assets, but I think it's quite nice to split them out.
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.ArchiveConstants.SETTINGS_PATH">
-            <summary>
-            Path for region settings.
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.ArchiveConstants.LANDDATA_PATH">
-            <value>
-              Path for region settings.
-            </value>
-        </member>
-        <member name="F:OpenMetaverse.Assets.ArchiveConstants.ASSET_EXTENSION_SEPARATOR">
-            <summary>
-            The character the separates the uuid from extension information in an archived asset filename
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.ArchiveConstants.ASSET_TYPE_TO_EXTENSION">
-            <summary>
-            Extensions used for asset types in the archive
-            </summary>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetsArchiver">
-            <summary>
-            Archives assets
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetsArchiver.m_assets">
-            <summary>
-            Archive assets
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetsArchiver.Archive(OpenMetaverse.Assets.TarArchiveWriter)">
-            <summary>
-            Archive the assets given to this archiver to the given archive.
-            </summary>
-            <param name="archive"></param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetsArchiver.WriteMetadata(OpenMetaverse.Assets.TarArchiveWriter)">
-            <summary>
-            Write an assets metadata file to the given archive
-            </summary>
-            <param name="archive"></param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetsArchiver.WriteData(OpenMetaverse.Assets.TarArchiveWriter)">
-            <summary>
-            Write asset data files to the given archive
-            </summary>
-            <param name="archive"></param>
-        </member>
-        <member name="T:OpenMetaverse.Assets.TarArchiveReader">
-            <summary>
-            Temporary code to do the bare minimum required to read a tar archive for our purposes
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.TarArchiveReader.m_br">
-            <summary>
-            Binary reader for the underlying stream
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.TarArchiveReader.m_nullCharArray">
-            <summary>
-            Used to trim off null chars
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.TarArchiveReader.m_spaceCharArray">
-            <summary>
-            Used to trim off space chars
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.TarArchiveReader.#ctor(System.IO.Stream)">
-            <summary>
-            Generate a tar reader which reads from the given stream.
-            </summary>
-            <param name="s"></param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.TarArchiveReader.ReadEntry(System.String@,OpenMetaverse.Assets.TarArchiveReader.TarEntryType@)">
-            <summary>
-            Read the next entry in the tar file.
-            </summary>
-            <param name="filePath"></param>
-            <param name="entryType"></param>
-            <returns>the data for the entry.  Returns null if there are no more entries</returns>
-        </member>
-        <member name="M:OpenMetaverse.Assets.TarArchiveReader.ReadHeader">
-            <summary>
-            Read the next 512 byte chunk of data as a tar header.
-            </summary>
-            <returns>A tar header struct.  null if we have reached the end of the archive.</returns>
-        </member>
-        <member name="M:OpenMetaverse.Assets.TarArchiveReader.ReadData(System.Int32)">
-            <summary>
-            Read data following a header
-            </summary>
-            <param name="fileSize"></param>
-            <returns></returns>
-        </member>
-        <member name="M:OpenMetaverse.Assets.TarArchiveReader.ConvertOctalBytesToDecimal(System.Byte[],System.Int32,System.Int32)">
-            <summary>
-            Convert octal bytes to a decimal representation
-            </summary>
-            <param name="bytes"></param>
-            <param name="count"></param>
-            <param name="startIndex"></param>
-            <returns></returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.TarArchiveWriter">
-            <summary>
-            Temporary code to produce a tar archive in tar v7 format
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.TarArchiveWriter.m_bw">
-            <summary>
-            Binary writer for the underlying stream
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.TarArchiveWriter.WriteDir(System.String)">
-            <summary>
-            Write a directory entry to the tar archive.  We can only handle one path level right now!
-            </summary>
-            <param name="dirName"></param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.TarArchiveWriter.WriteFile(System.String,System.String)">
-            <summary>
-            Write a file to the tar archive
-            </summary>
-            <param name="filePath"></param>
-            <param name="data"></param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.TarArchiveWriter.WriteFile(System.String,System.Byte[])">
-            <summary>
-            Write a file to the tar archive
-            </summary>
-            <param name="filePath"></param>
-            <param name="data"></param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.TarArchiveWriter.Close">
-            <summary>
-            Finish writing the raw tar archive data to a stream.  The stream will be closed on completion.
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.TarArchiveWriter.WriteEntry(System.String,System.Byte[],System.Char)">
-            <summary>
-            Write a particular entry
-            </summary>
-            <param name="filePath"></param>
-            <param name="data"></param>
-            <param name="fileType"></param>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetAnimation">
-            <summary>
-            Represents an Animation
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetAnimation.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetAnimation.#ctor">
-            <summary>Default Constructor</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetAnimation.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>
-            Construct an Asset object of type Animation
-            </summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetBodypart">
-            <summary>
-            Represents an <seealso cref="T:OpenMetaverse.Assets.AssetWearable"/> that represents an avatars body ie: Hair, Etc.
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetBodypart.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetBodypart.#ctor">
-            <summary>Initializes a new instance of an AssetBodyPart object</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetBodypart.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>Initializes a new instance of an AssetBodyPart object with parameters</summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetCallingCard">
-            <summary>
-            Represents a Callingcard with AvatarID and Position vector
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetCallingCard.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetCallingCard.AvatarID">
-            <summary>UUID of the Callingcard target avatar</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetCallingCard.#ctor">
-            <summary>Construct an Asset of type Callingcard</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetCallingCard.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>
-            Construct an Asset object of type Callingcard
-            </summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetCallingCard.#ctor(OpenMetaverse.UUID)">
-            <summary>
-            Constuct an asset of type Callingcard
-            </summary>
-            <param name="avatarID">UUID of the target avatar</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetCallingCard.Encode">
-            <summary>
-            Encode the raw contents of a string with the specific Callingcard format
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetCallingCard.Decode">
-            <summary>
-            Decode the raw asset data, populating the AvatarID and Position
-            </summary>
-            <returns>true if the AssetData was successfully decoded to a UUID and Vector</returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetClothing">
-            <summary>
-            Represents an <seealso cref="T:OpenMetaverse.Assets.AssetWearable"/> that can be worn on an avatar
-            such as a Shirt, Pants, etc.
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetClothing.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetClothing.#ctor">
-            <summary>Initializes a new instance of an AssetScriptBinary object</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetClothing.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>Initializes a new instance of an AssetScriptBinary object with parameters</summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="T:OpenMetaverse.Assets.GestureStepType">
-            <summary>
-            Type of gesture step
-            </summary>
-        </member>
-        <member name="T:OpenMetaverse.Assets.GestureStep">
-            <summary>
-            Base class for gesture steps
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.GestureStep.GestureStepType">
-            <summary>
-            Retururns what kind of gesture step this is
-            </summary>
-        </member>
-        <member name="T:OpenMetaverse.Assets.GestureStepAnimation">
-            <summary>
-            Describes animation step of a gesture
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.GestureStepAnimation.GestureStepType">
-            <summary>
-            Returns what kind of gesture step this is
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.GestureStepAnimation.AnimationStart">
-            <summary>
-            If true, this step represents start of animation, otherwise animation stop
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.GestureStepAnimation.ID">
-            <summary>
-            Animation asset <see cref="T:OpenMetaverse.UUID"/>
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.GestureStepAnimation.Name">
-            <summary>
-            Animation inventory name
-            </summary>
-        </member>
-        <member name="T:OpenMetaverse.Assets.GestureStepSound">
-            <summary>
-            Describes sound step of a gesture
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.GestureStepSound.GestureStepType">
-            <summary>
-            Returns what kind of gesture step this is
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.GestureStepSound.ID">
-            <summary>
-            Sound asset <see cref="T:OpenMetaverse.UUID"/>
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.GestureStepSound.Name">
-            <summary>
-            Sound inventory name
-            </summary>
-        </member>
-        <member name="T:OpenMetaverse.Assets.GestureStepChat">
-            <summary>
-            Describes sound step of a gesture
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.GestureStepChat.GestureStepType">
-            <summary>
-            Returns what kind of gesture step this is
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.GestureStepChat.Text">
-            <summary>
-            Text to output in chat
-            </summary>
-        </member>
-        <member name="T:OpenMetaverse.Assets.GestureStepWait">
-            <summary>
-            Describes sound step of a gesture
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.GestureStepWait.GestureStepType">
-            <summary>
-            Returns what kind of gesture step this is
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.GestureStepWait.WaitForAnimation">
-            <summary>
-            If true in this step we wait for all animations to finish
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.GestureStepWait.WaitForTime">
-            <summary>
-            If true gesture player should wait for the specified amount of time
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.GestureStepWait.WaitTime">
-            <summary>
-            Time in seconds to wait if WaitForAnimation is false
-            </summary>
-        </member>
-        <member name="T:OpenMetaverse.Assets.GestureStepEOF">
-            <summary>
-            Describes the final step of a gesture
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.GestureStepEOF.GestureStepType">
-            <summary>
-            Returns what kind of gesture step this is
-            </summary>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetGesture">
-            <summary>
-            Represents a sequence of animations, sounds, and chat actions
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetGesture.AssetType">
-            <summary>
-            Returns asset type
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetGesture.TriggerKey">
-            <summary>
-            Keyboard key that triggers the gestyre
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetGesture.TriggerKeyMask">
-            <summary>
-            Modifier to the trigger key
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetGesture.Trigger">
-            <summary>
-            String that triggers playing of the gesture sequence
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetGesture.ReplaceWith">
-            <summary>
-            Text that replaces trigger in chat once gesture is triggered
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetGesture.Sequence">
-            <summary>
-            Sequence of gesture steps
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetGesture.#ctor">
-            <summary>
-            Constructs guesture asset
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetGesture.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>
-            Constructs guesture asset
-            </summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetGesture.Encode">
-            <summary>
-            Encodes gesture asset suitable for uplaod
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetGesture.Decode">
-            <summary>
-            Decodes gesture assset into play sequence
-            </summary>
-            <returns>true if the asset data was decoded successfully</returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetLandmark">
-            <summary>
-            Represents a Landmark with RegionID and Position vector
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetLandmark.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetLandmark.RegionID">
-            <summary>UUID of the Landmark target region</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetLandmark.Position">
-            <summary> Local position of the target </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetLandmark.#ctor">
-            <summary>Construct an Asset of type Landmark</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetLandmark.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>
-            Construct an Asset object of type Landmark
-            </summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetLandmark.Encode">
-            <summary>
-            Encode the raw contents of a string with the specific Landmark format
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetLandmark.Decode">
-            <summary>
-            Decode the raw asset data, populating the RegionID and Position
-            </summary>
-            <returns>true if the AssetData was successfully decoded to a UUID and Vector</returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetMesh">
-            <summary>
-            Represents Mesh asset
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetMesh.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetMesh.MeshData">
-            <summary>
-            Decoded mesh data
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetMesh.#ctor">
-            <summary>Initializes a new instance of an AssetMesh object</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetMesh.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>Initializes a new instance of an AssetMesh object with parameters</summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetMesh.Encode">
-            <summary>
-            TODO: Encodes Collada file into LLMesh format
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetMesh.Decode">
-            <summary>
-            Decodes mesh asset. See <see cref="M:OpenMetaverse.Rendering.FacetedMesh.TryDecodeFromAsset(OpenMetaverse.Primitive,OpenMetaverse.Assets.AssetMesh,OpenMetaverse.Rendering.DetailLevel,OpenMetaverse.Rendering.FacetedMesh@)"/>
-            to furter decode it for rendering</summary>
-            <returns>true</returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetMutable">
-            <summary>
-            Represents an Animation
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetMutable.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetMutable.#ctor(OpenMetaverse.AssetType)">
-            <summary>Default Constructor</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetMutable.#ctor(OpenMetaverse.AssetType,OpenMetaverse.UUID,System.Byte[])">
-            <summary>
-            Construct an Asset object of type Animation
-            </summary>
-            <param name="type">Asset type</param>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetNotecard">
-            <summary>
-            Represents a string of characters encoded with specific formatting properties
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetNotecard.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetNotecard.BodyText">
-            <summary>A text string containing main text of the notecard</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetNotecard.EmbeddedItems">
-            <summary>List of <see cref="T:OpenMetaverse.InventoryItem"/>s embedded on the notecard</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetNotecard.#ctor">
-            <summary>Construct an Asset of type Notecard</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetNotecard.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>
-            Construct an Asset object of type Notecard
-            </summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetNotecard.Encode">
-            <summary>
-            Encode the raw contents of a string with the specific Linden Text properties
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetNotecard.Decode">
-            <summary>
-            Decode the raw asset data including the Linden Text properties
-            </summary>
-            <returns>true if the AssetData was successfully decoded</returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetPrim">
-            <summary>
-            A linkset asset, containing a parent primitive and zero or more children
-            </summary>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetPrim.ProfileShape">
-            <summary>
-            Only used internally for XML serialization/deserialization
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetPrim.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetPrim.#ctor">
-            <summary>Initializes a new instance of an AssetPrim object</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetPrim.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>
-            Initializes a new instance of an AssetPrim object
-            </summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetPrim.Encode">
-            <summary>
-            
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetPrim.Decode">
-            <summary>
-            
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.PrimObject">
-            <summary>
-            The deserialized form of a single primitive in a linkset asset
-            </summary>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetScriptBinary">
-            <summary>
-            Represents an AssetScriptBinary object containing the 
-            LSO compiled bytecode of an LSL script
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetScriptBinary.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetScriptBinary.#ctor">
-            <summary>Initializes a new instance of an AssetScriptBinary object</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetScriptBinary.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>Initializes a new instance of an AssetScriptBinary object with parameters</summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetScriptBinary.Encode">
-            <summary>
-            TODO: Encodes a scripts contents into a LSO Bytecode file
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetScriptBinary.Decode">
-            <summary>
-            TODO: Decode LSO Bytecode into a string
-            </summary>
-            <returns>true</returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetScriptText">
-            <summary>
-            Represents an LSL Text object containing a string of UTF encoded characters
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetScriptText.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetScriptText.Source">
-            <summary>A string of characters represting the script contents</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetScriptText.#ctor">
-            <summary>Initializes a new AssetScriptText object</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetScriptText.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>
-            Initializes a new AssetScriptText object with parameters
-            </summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetScriptText.Encode">
-            <summary>
-            Encode a string containing the scripts contents into byte encoded AssetData
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetScriptText.Decode">
-            <summary>
-            Decode a byte array containing the scripts contents into a string
-            </summary>
-            <returns>true if decoding is successful</returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetSound">
-            <summary>
-            Represents a Sound Asset
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetSound.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetSound.#ctor">
-            <summary>Initializes a new instance of an AssetSound object</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetSound.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>Initializes a new instance of an AssetSound object with parameters</summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetSound.Encode">
-            <summary>
-            TODO: Encodes a sound file
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetSound.Decode">
-            <summary>
-            TODO: Decode a sound file
-            </summary>
-            <returns>true</returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetTexture">
-            <summary>
-            Represents a texture
-            </summary>
-        </member>
-        <member name="P:OpenMetaverse.Assets.AssetTexture.AssetType">
-            <summary>Override the base classes AssetType</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetTexture.Image">
-            <summary>A <seealso cref="T:OpenMetaverse.Imaging.ManagedImage"/> object containing image data</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetTexture.LayerInfo">
-            <summary></summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetTexture.Components">
-            <summary></summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetTexture.#ctor">
-            <summary>Initializes a new instance of an AssetTexture object</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetTexture.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>
-            Initializes a new instance of an AssetTexture object
-            </summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetTexture.#ctor(OpenMetaverse.Imaging.ManagedImage)">
-            <summary>
-            Initializes a new instance of an AssetTexture object
-            </summary>
-            <param name="image">A <seealso cref="T:OpenMetaverse.Imaging.ManagedImage"/> object containing texture data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetTexture.Encode">
-            <summary>
-            Populates the <seealso cref="!:AssetData"/> byte array with a JPEG2000
-            encoded image created from the data in <seealso cref="F:OpenMetaverse.Assets.AssetTexture.Image"/>
-            </summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetTexture.Decode">
-            <summary>
-            Decodes the JPEG2000 data in <code>AssetData</code> to the
-            <seealso cref="T:OpenMetaverse.Imaging.ManagedImage"/> object <seealso cref="F:OpenMetaverse.Assets.AssetTexture.Image"/>
-            </summary>
-            <returns>True if the decoding was successful, otherwise false</returns>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetTexture.DecodeLayerBoundaries">
-            <summary>
-            Decodes the begin and end byte positions for each quality layer in
-            the image
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="T:OpenMetaverse.Assets.AssetWearable">
-            <summary>
-            Represents a Wearable Asset, Clothing, Hair, Skin, Etc
-            </summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.Name">
-            <summary>A string containing the name of the asset</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.Description">
-            <summary>A string containing a short description of the asset</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.WearableType">
-            <summary>The Assets WearableType</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.ForSale">
-            <summary>The For-Sale status of the object</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.SalePrice">
-            <summary>An Integer representing the purchase price of the asset</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.Creator">
-            <summary>The <seealso cref="T:OpenMetaverse.UUID"/> of the assets creator</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.Owner">
-            <summary>The <seealso cref="T:OpenMetaverse.UUID"/> of the assets current owner</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.LastOwner">
-            <summary>The <seealso cref="T:OpenMetaverse.UUID"/> of the assets prior owner</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.Group">
-            <summary>The <seealso cref="T:OpenMetaverse.UUID"/> of the Group this asset is set to</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.GroupOwned">
-            <summary>True if the asset is owned by a <seealso cref="F:OpenMetaverse.Assets.AssetWearable.Group"/></summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.Permissions">
-            <summary>The Permissions mask of the asset</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.Params">
-            <summary>A Dictionary containing Key/Value pairs of the objects parameters</summary>
-        </member>
-        <member name="F:OpenMetaverse.Assets.AssetWearable.Textures">
-            <summary>A Dictionary containing Key/Value pairs where the Key is the textures Index and the Value is the Textures <seealso cref="T:OpenMetaverse.UUID"/></summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetWearable.#ctor">
-            <summary>Initializes a new instance of an AssetWearable object</summary>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetWearable.#ctor(OpenMetaverse.UUID,System.Byte[])">
-            <summary>Initializes a new instance of an AssetWearable object with parameters</summary>
-            <param name="assetID">A unique <see cref="T:OpenMetaverse.UUID"/> specific to this asset</param>
-            <param name="assetData">A byte array containing the raw asset data</param>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetWearable.Decode">
-            <summary>
-            Decode an assets byte encoded data to a string
-            </summary>
-            <returns>true if the asset data was decoded successfully</returns>
-        </member>
-        <member name="M:OpenMetaverse.Assets.AssetWearable.Encode">
-            <summary>
-            Encode the assets string represantion into a format consumable by the asset server
             </summary>
         </member>
         <member name="F:OpenMetaverse.Http.EventQueueClient.REQUEST_TIMEOUT">
