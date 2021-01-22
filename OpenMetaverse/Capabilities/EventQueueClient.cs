@@ -56,9 +56,11 @@ namespace OpenMetaverse.Http
 
 				// Debug queue problems
 				private	long lastQueuePush = 0;
+		private int httpFails = 0;
 
-        public EventQueueClient(Uri eventQueueLocation)
-        {
+
+
+        public EventQueueClient(Uri eventQueueLocation) {
             _Address = eventQueueLocation;
         }
 
@@ -102,123 +104,114 @@ namespace OpenMetaverse.Http
             }
         }
 
-        void RequestCompletedHandler(HttpWebRequest request, HttpWebResponse response, byte[] responseData, Exception error)
-        {
+        void RequestCompletedHandler(HttpWebRequest request, HttpWebResponse response, byte[] responseData, Exception error) {
             // We don't care about this request now that it has completed
             _Request = null;
 
             OSDArray events = null;
             int ack = 0;
 
-            if (responseData != null)
-            {
+            if(responseData != null) {
                 _errorCount = 0;
                 // Got a response
                 OSDMap result = OSDParser.DeserializeLLSDXml(responseData) as OSDMap;
 
-                if (result != null)
-                {
+                if(result != null) {
                     events = result["events"] as OSDArray;
                     ack = result["id"].AsInteger();
+                } else {
+                    string text = System.Text.Encoding.UTF8.GetString(responseData);
+                    if(text.Length > 300) { text = text.Substring(0, 300) + "..."; }
+
+                    Logger.Log("Got an unparseable response from the event queue: \"" + text
+                         + "\"", Helpers.LogLevel.Warning);
                 }
-                else
-                {
-                    Logger.Log("Got an unparseable response from the event queue: \"" +
-                        System.Text.Encoding.UTF8.GetString(responseData) + "\"", Helpers.LogLevel.Warning);
-                }
-            }
-            else if (error != null)
-            {
+            } else if(error != null) {
                 #region Error handling
 
                 HttpStatusCode code = HttpStatusCode.OK;
 
-                if (error is WebException)
-                {
+                if(error is WebException) {
                     WebException webException = (WebException)error;
 
-                    if (webException.Response != null)
+                    if(webException.Response != null)
                         code = ((HttpWebResponse)webException.Response).StatusCode;
-                    else if (webException.Status == WebExceptionStatus.RequestCanceled)
+                    else if(webException.Status == WebExceptionStatus.RequestCanceled)
                         goto HandlingDone;
                 }
 
-                if (error is WebException && ((WebException)error).Response != null)
+                if(error is WebException && ((WebException)error).Response != null)
                     code = ((HttpWebResponse)((WebException)error).Response).StatusCode;
 
-                if (code == HttpStatusCode.NotFound || code == HttpStatusCode.Gone)
-                {
-                    Logger.Log(String.Format("Closing event queue at {0} due to missing caps URI", _Address), Helpers.LogLevel.Info);
+                if(code == HttpStatusCode.NotFound) {
+                    Logger.Log(String.Format($"Closing event queue at {0} due to missing caps URI (error {code})", _Address), Helpers.LogLevel.Info);
 
                     _Running = false;
                     _Dead = true;
-                }
-                else if (code == HttpStatusCode.BadGateway)
-                {
+                } else if(code == HttpStatusCode.Gone) {
+                    httpFails++;
+
+                    Logger.Log(String.Format($"Missing caps URI (error {code}, {httpFails} fails)", _Address), Helpers.LogLevel.Info);
+
+                    if(httpFails > 3) {
+                        Logger.Log($"Too much caps URI fails, closing event queue", Helpers.LogLevel.Info);
+                        _Running = false;
+                        _Dead = true;
+                    }
+                } else if(code == HttpStatusCode.BadGateway) {
                     // This is not good (server) protocol design, but it's normal.
                     // The EventQueue server is a proxy that connects to a Squid
                     // cache which will time out periodically. The EventQueue server
                     // interprets this as a generic error and returns a 502 to us
                     // that we ignore
-                }
-                else
-                {
+                } else {
                     ++_errorCount;
 
                     // Try to log a meaningful error message
-                    if (code != HttpStatusCode.OK)
-                    {
+                    if(code != HttpStatusCode.OK) {
                         Logger.Log(String.Format("Unrecognized caps connection problem from {0}: {1}",
                             _Address, code), Helpers.LogLevel.Warning);
-                    }
-                    else if (error.InnerException != null)
-                    {
+                    } else if(error.InnerException != null) {
                         Logger.Log(String.Format("Unrecognized internal caps exception from {0}: {1}",
                             _Address, error.InnerException.Message), Helpers.LogLevel.Warning);
-                    }
-                    else
-                    {
+                    } else {
                         Logger.Log(String.Format("Unrecognized caps exception from {0}: {1} (last queue push {2} sec ago)",
                             _Address, error.Message, DateTime.Now.Ticks / 10000 - lastQueuePush), Helpers.LogLevel.Warning);
                     }
                 }
 
                 #endregion Error handling
-            }
-            else
-            {
+            } else {
                 ++_errorCount;
 
                 Logger.Log("No response from the event queue but no reported error either", Helpers.LogLevel.Warning);
             }
 
-        HandlingDone:
+            HandlingDone:
 
             #region Resume the connection
 
-            if (_Running)
-            {
+            if(_Running) {
                 OSDMap osdRequest = new OSDMap();
-                if (ack != 0) osdRequest["ack"] = OSD.FromInteger(ack);
+                if(ack != 0) osdRequest["ack"] = OSD.FromInteger(ack);
                 else osdRequest["ack"] = new OSD();
                 osdRequest["done"] = OSD.FromBoolean(_Dead);
 
                 byte[] postData = OSDParser.SerializeLLSDXmlBytes(osdRequest);
 
-                if (_errorCount > 0) // Exponentially back off, so we don't hammer the CPU
+                if(_errorCount > 0) // Exponentially back off, so we don't hammer the CPU
                     Thread.Sleep(_random.Next(500 + (int)Math.Pow(2, _errorCount)));
 
                 // Resume the connection. The event handler for the connection opening
                 // just sets class _Request variable to the current HttpWebRequest
                 CapsBase.UploadDataAsync(_Address, null, "application/xml", postData, REQUEST_TIMEOUT,
-                    delegate(HttpWebRequest newRequest) { _Request = newRequest; }, null, RequestCompletedHandler);
+                    delegate (HttpWebRequest newRequest) { _Request = newRequest; }, null, RequestCompletedHandler);
 
-								lastQueuePush = DateTime.Now.Ticks / 10000;
+                lastQueuePush = DateTime.Now.Ticks / 10000;
 
                 // If the event queue is dead at this point, turn it off since
                 // that was the last thing we want to do
-                if (_Dead)
-                {
+                if(_Dead) {
                     _Running = false;
                     Logger.DebugLog("Sent event queue shutdown message");
                 }
@@ -228,20 +221,20 @@ namespace OpenMetaverse.Http
 
             #region Handle incoming events
 
-            if (OnEvent != null && events != null && events.Count > 0)
-            {
+            if(OnEvent != null && events != null && events.Count > 0) {
+
                 // Fire callbacks for each event received
-                foreach (OSDMap evt in events)
-                {
+                foreach(OSDMap evt in events) {
                     string msg = evt["message"].AsString();
+
                     OSDMap body = (OSDMap)evt["body"];
 
                     try { OnEvent(msg, body); }
-                    catch (Exception ex) { Logger.Log(ex.Message, Helpers.LogLevel.Error, ex); }
+                    catch(Exception ex) { Logger.Log(ex.Message, Helpers.LogLevel.Error, ex); }
                 }
             }
 
             #endregion Handle incoming events
-        }
+        }   
     }
 }
