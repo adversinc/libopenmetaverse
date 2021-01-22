@@ -1530,26 +1530,20 @@ namespace OpenMetaverse
         /// <remarks>InventoryFolder.DescendentCount will only be accurate if both folders and items are
         /// requested</remarks>
         public List<InventoryBase> FolderContents(UUID folder, UUID owner, bool folders, bool items,
-            InventorySortOrder order, int timeoutMS)
-        {
+            InventorySortOrder order, int timeoutMS) {
             List<InventoryBase> objects = null;
             AutoResetEvent fetchEvent = new AutoResetEvent(false);
 
             EventHandler<FolderUpdatedEventArgs> callback =
-                delegate(object sender, FolderUpdatedEventArgs e)
-                {
-                    if (e.FolderID == folder
-                        && _Store[folder] is InventoryFolder)
-                    {
+                delegate (object sender, FolderUpdatedEventArgs e) {
+                    if(e.FolderID == folder && _Store[folder] is InventoryFolder) {
                         // InventoryDescendentsHandler only stores DescendendCount if both folders and items are fetched.
-                        if (_Store.GetContents(folder).Count >= ((InventoryFolder)_Store[folder]).DescendentCount)
-                        {
-
+                        if(_Store.GetContents(folder).Count >= ((InventoryFolder)_Store[folder]).DescendentCount) {
                             fetchEvent.Set();
+                        } else {
+                            Logger.DebugLog($"FolderContents callback missing fetchEvent.Set: {_Store.GetContents(folder).Count} vs {((InventoryFolder)_Store[folder]).DescendentCount}", Client);
                         }
-                    }
-                    else
-                    {
+                    } else {
                         fetchEvent.Set();
                     }
                 };
@@ -1557,8 +1551,9 @@ namespace OpenMetaverse
             FolderUpdated += callback;
 
             RequestFolderContents(folder, owner, folders, items, order);
-            if (fetchEvent.WaitOne(timeoutMS, false))
+            if(fetchEvent.WaitOne(timeoutMS, false)) {
                 objects = _Store.GetContents(folder);
+            }
 
             FolderUpdated -= callback;
 
@@ -1575,14 +1570,10 @@ namespace OpenMetaverse
         /// <param name="order">the sort order to return items in</param>
         /// <seealso cref="InventoryManager.FolderContents"/>
         public void RequestFolderContents(UUID folder, UUID owner, bool folders, bool items,
-            InventorySortOrder order)
-        {
+            InventorySortOrder order) {
             string cap = owner == Client.Self.AgentID ? "FetchInventoryDescendents2" : "FetchLibDescendents2";
 
-            if (Client.Settings.HTTP_INVENTORY &&
-                Client.Network.CurrentSim.Caps != null &&
-                Client.Network.CurrentSim.Caps.CapabilityURI(cap) != null)
-            {
+            if(Client.Settings.HTTP_INVENTORY && Client.Network?.CurrentSim?.Caps?.CapabilityURI(cap) != null) {
                 RequestFolderContentsCap(folder, owner, folders, items, order);
                 return;
             }
@@ -1597,7 +1588,8 @@ namespace OpenMetaverse
             fetch.InventoryData.OwnerID = owner;
             fetch.InventoryData.SortOrder = (int)order;
 
-            Client.Network.SendPacket(fetch);
+            // TODO: process the missing network somehow
+            Client.Network?.SendPacket(fetch);
         }
 
         /// <summary>
