@@ -525,7 +525,7 @@ namespace OpenMetaverse
                   Thread.Sleep(500);
 					      } catch(System.Threading.ThreadAbortException) {
 					        // Ignore if thread has been aborted by logoff
-									//Thread.ResetAbort();
+									;
 				        }
 				        catch(Exception ex) {
 									throw;
