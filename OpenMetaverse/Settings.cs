@@ -87,6 +87,12 @@ namespace OpenMetaverse
         /// </summary>
         public bool HTTP_INVENTORY = true;
 
+				/// <summary>
+				/// Respect the result of OnInventoryObjectOffered event processing
+				/// (InventoryObjectOfferedEventArgs.Accept)
+				/// </summary>
+				public bool RESPECT_INVENTORY_OFFER_ACCEPTS = true;
+
         #endregion
 
         #region Timeouts and Intervals

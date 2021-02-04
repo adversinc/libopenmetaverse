@@ -602,7 +602,11 @@ namespace OpenMetaverse
         /// <summary>Finished, Sim Changed</summary>
         FinishedViaNewSim = 1 << 28,
         /// <summary>Finished, Same Sim</summary>
-        FinishedViaSameSim = 1 << 29
+        FinishedViaSameSim = 1 << 29,
+        /// <summary>Agent coming into the grid from another grid</summary>
+        ViaHGLogin = 1 << 30,
+
+        notViaHGLogin = 0xbffffff
     }
 
     /// <summary>
@@ -943,7 +947,7 @@ namespace OpenMetaverse
         public event EventHandler<TeleportEventArgs> TeleportProgress
         {
             add { lock (m_TeleportLock) { m_Teleport += value; } }
-            remove { lock (m_TeleportLock) { m_Teleport += value; } }
+            remove { lock (m_TeleportLock) { m_Teleport -= value; } }
         }
 
         /// <summary>The event subscribers. null if no subcribers</summary>
@@ -1587,20 +1591,113 @@ namespace OpenMetaverse
         /// <summary>
         /// Request any instant messages sent while the client was offline to be resent.
         /// </summary>
-        public void RetrieveInstantMessages()
-        {
-            RetrieveInstantMessagesPacket p = new RetrieveInstantMessagesPacket();
-            p.AgentData.AgentID = Client.Self.AgentID;
-            p.AgentData.SessionID = Client.Self.SessionID;
-            Client.Network.SendPacket(p);
+        public void RetrieveInstantMessages() {
+            var capUrl = Client.Network.CurrentSim.Caps.CapabilityURI("ReadOfflineMsgs");
+
+            if(capUrl == null) {
+                RetrieveInstantMessagesPacket p = new RetrieveInstantMessagesPacket();
+                p.AgentData.AgentID = Client.Self.AgentID;
+                p.AgentData.SessionID = Client.Self.SessionID;
+                Client.Network.SendPacket(p);
+            } else {
+                RequestOfflineMessages();
+            }
         }
 
-        /// <summary>
-        /// Send an Instant Message to another Avatar
-        /// </summary>
-        /// <param name="target">The recipients <see cref="UUID"/></param>
-        /// <param name="message">A <see cref="string"/> containing the message to send</param>
-        public void InstantMessage(UUID target, string message)
+		/// <summary>
+		/// Request offline messages from sim
+		/// </summary>
+		void RequestOfflineMessages() {
+			var capUrl = Client.Network.CurrentSim.Caps.CapabilityURI("ReadOfflineMsgs");
+			CapsClient request = new CapsClient(capUrl);
+
+			request.OnComplete += delegate (CapsClient client, OSD result, Exception error) {
+				if(error != null) {
+					Logger.Log("ReadOfflineMsgs capability request failed", Helpers.LogLevel.Error, Client);
+					return;
+				}
+
+				try {
+					OfflineMessageParser(result);
+				} catch(Exception ex) {
+					Logger.Log("Offline messages parsing failed: " + ex.Message, Helpers.LogLevel.Error, Client);
+				}
+			};
+
+			request.BeginGetResponse(null, "application/llsd+json", Client.Settings.CAPS_TIMEOUT);
+		}
+
+		 void OfflineMessageParser(OSD data) {
+			//OSD data = OSDParser.Deserialize("[[{\"asset_id\":\"c9b630b4-a057-042f-07ad-913d7627b063\",\"binary_bucket\":[0],\"count\":0,\"dialog\":0,\"from_agent_id\":\"cd93067e-7c4e-41c0-ba91-be01f4bafe35\",\"from_agent_name\":\"Glaznah Gassner\",\"from_group\":\"N\",\"local_x\":201.634,\"local_y\":38.792,\"local_z\":93.8689,\"message\":\"1 (Sent from SpeedLight viewer, https://speedlight.io/?ref=134)\",\"message_time\":\"2020-05-27 15:59:38\",\"region_id\":\"1cd3ed36-beac-49c1-a279-efac8ac071fb\",\"timestamp\":\"1590595178\",\"to_agent_id\":\"042536ca-dc19-45ef-bd3c-2f3c829d4e56\"},{\"asset_id\":\"c9b630b4-a057-042f-07ad-913d7627b063\",\"binary_bucket\":[0],\"count\":0,\"dialog\":0,\"from_agent_id\":\"cd93067e-7c4e-41c0-ba91-be01f4bafe35\",\"from_agent_name\":\"Glaznah Gassner\",\"from_group\":\"N\",\"local_x\":201.634,\"local_y\":38.792,\"local_z\":93.8689,\"message\":\"2\",\"message_time\":\"2020-05-27 15:59:40\",\"region_id\":\"1cd3ed36-beac-49c1-a279-efac8ac071fb\",\"timestamp\":\"1590595180\",\"to_agent_id\":\"042536ca-dc19-45ef-bd3c-2f3c829d4e56\"},{\"asset_id\":\"c9b630b4-a057-042f-07ad-913d7627b063\",\"binary_bucket\":[0],\"count\":0,\"dialog\":0,\"from_agent_id\":\"cd93067e-7c4e-41c0-ba91-be01f4bafe35\",\"from_agent_name\":\"Glaznah Gassner\",\"from_group\":\"N\",\"local_x\":201.634,\"local_y\":38.792,\"local_z\":93.8689,\"message\":\"3\",\"message_time\":\"2020-05-27 15:59:42\",\"region_id\":\"1cd3ed36-beac-49c1-a279-efac8ac071fb\",\"timestamp\":\"1590595182\",\"to_agent_id\":\"042536ca-dc19-45ef-bd3c-2f3c829d4e56\"}]]");
+
+			// We expect to get array within an array
+			if(data.Type != OSDType.Array || (data as OSDArray).Count == 0 || (data as OSDArray)[0].Type != OSDType.Array) {
+				Logger.Log("Invalid offline message content received via capability", Helpers.LogLevel.Error, Client);
+				return;
+			}
+
+			OSDArray messages = (data as OSDArray)[0] as OSDArray;
+
+			foreach(var entry in messages) {
+				if(entry.Type != OSDType.Map) {
+					Logger.Log("Invalid offline message content entries received via capability", Helpers.LogLevel.Error, Client);
+					return;
+				}
+				OSDMap msg = entry as OSDMap;
+			
+				/*
+				 LLIMProcessing::processNewMessage(
+						message_data["from_agent_id"].asUUID(),
+            from_group,
+            message_data["to_agent_id"].asUUID(),
+            IM_OFFLINE,
+            (EInstantMessage)message_data["dialog"].asInteger(),
+            LLUUID::null, // session id, since there is none we can only use frienship/group invite caps
+            message_data["timestamp"].asInteger(),
+            message_data["from_agent_name"].asString(),
+            message_data["message"].asString(),
+            parent_estate_id,
+            message_data["region_id"].asUUID(),
+            position,
+            &data[0],
+            binary_bucket_size,
+            sender,
+            message_data["asset_id"].asUUID()); // not necessarily an asset
+						*/
+
+				var packet = new ImprovedInstantMessagePacket();
+
+				packet.AgentData.AgentID = msg["from_agent_id"].AsUUID();
+				if(msg["from_group"].Type == OSDType.Integer) {
+					packet.MessageBlock.FromGroup = msg["from_group"].AsInteger() > 0;
+				} else {
+					packet.MessageBlock.FromGroup = msg["from_group"].AsString() == "Y";
+				}
+				packet.MessageBlock.ToAgentID = msg["to_agent_id"].AsUUID();
+				packet.MessageBlock.Offline = 1;
+				packet.MessageBlock.Dialog = (byte)msg["dialog"].AsInteger();
+				packet.MessageBlock.ID = UUID.Zero;
+				packet.MessageBlock.Timestamp = msg["timestamp"].AsUInteger();
+				packet.MessageBlock.FromAgentName = msg["from_agent_name"].AsBinary();
+				packet.MessageBlock.Message = msg["message"].AsBinary();
+				packet.MessageBlock.ParentEstateID = msg.ContainsKey("parent_estate_id") ? msg["parent_estate_id"].AsUInteger() : 1;
+				packet.MessageBlock.RegionID = msg["region_id"].AsUUID();
+				packet.MessageBlock.Position = new Vector3((float)msg["local_x"].AsReal(), (float)msg["local_y"].AsReal(), (float)msg["local_z"].AsReal());
+				packet.MessageBlock.BinaryBucket = msg["binary_bucket"].AsBinary();
+				// binary_bucket_size -
+				// sender ?
+				// asset_id ?
+
+				InstantMessageHandler(Client, new PacketReceivedEventArgs(packet, Client.Network.CurrentSim));
+			}
+		}
+
+		/// <summary>
+		/// Send an Instant Message to another Avatar
+		/// </summary>
+		/// <param name="target">The recipients <see cref="UUID"/></param>
+		/// <param name="message">A <see cref="string"/> containing the message to send</param>
+		public void InstantMessage(UUID target, string message)
         {
             InstantMessage(Name, target, message, AgentID.Equals(target) ? AgentID : target ^ AgentID,
                 InstantMessageDialog.MessageFromAgent, InstantMessageOnline.Offline, this.SimPosition,
@@ -4315,7 +4412,17 @@ namespace OpenMetaverse
                 {
                     Logger.Log("Failed joining IM:", Helpers.LogLevel.Warning, Client, ex);
                 }
-                OnInstantMessage(new InstantMessageEventArgs(im, simulator));
+
+							// The workaround to actually discard muted people and objects
+							var muted = false;
+
+							this.MuteList.ForEach(delegate (KeyValuePair<string, MuteEntry> kvp) {
+								if(kvp.Value.ID == im.FromAgentID) { muted = true; }
+							});
+
+							if(!muted) {
+								OnInstantMessage(new InstantMessageEventArgs(im, simulator));
+							}
             }
         }
 
@@ -4788,8 +4895,8 @@ namespace OpenMetaverse
 								buf[j] = im.BinaryBucket[i++];
 							}
 							 */
-						}
-        }
+			}
+		}
     }
 
     /// <summary>Contains the currency balance</summary>

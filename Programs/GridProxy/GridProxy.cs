@@ -31,13 +31,14 @@
  */
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Xml;
 using System.Text;
 using System.Threading;
 using System.Net.Sockets;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using OpenMetaverse;
 using OpenMetaverse.Http;
@@ -189,6 +190,7 @@ namespace GridProxy
         
         static List<string> BinaryResponseCaps = new List<string>()
         {
+            "ViewerAsset",
             "GetTexture",
             "GetMesh",
             "GetMesh2"
@@ -205,6 +207,7 @@ namespace GridProxy
 
             ServicePointManager.CertificatePolicy = new TrustAllCertificatePolicy();
             ServicePointManager.Expect100Continue = false;
+            ServicePointManager.DefaultConnectionLimit = 128;
             // Even though this will compile on Mono 2.4, it throws a runtime exception
             //ServicePointManager.ServerCertificateValidationCallback = TrustAllCertificatePolicy.TrustAllCertificateHandler;
 
@@ -581,13 +584,14 @@ namespace GridProxy
 
             if (uri == "/")
             {
+                headers["method"] = meth;
                 if (contentType == "application/xml+llsd" || contentType == "application/xml")
                 {
                     ProxyLoginSD(netStream, content);
                 }
                 else
                 {
-                    ProxyLogin(netStream, content);
+                    ProxyLogin(netStream, content, headers);
                 }
             }
             else if (new Regex(@"^/https?://.*$").Match(uri).Success)
@@ -629,21 +633,36 @@ namespace GridProxy
                 return;
             }
 
+            if(meth =="PATCH")
+            {
+
+            }
             CapInfo cap = null;
             lock (this)
             {
                 string capuri = Regex.Replace(uri, @"/?\?.*$", string.Empty);
-               
+                // detect AIS url
+                int indx = capuri.IndexOf("/item/");
+                if (indx < 0)
+                    indx = capuri.IndexOf("/category/");
+                if(indx > 0)
+                    capuri = capuri.Substring(0,indx);
+
                 if (KnownCaps.ContainsKey(capuri))
                 {
                     cap = KnownCaps[capuri];
                 }
             }
 
-            CapsRequest capReq = null; bool shortCircuit = false; bool requestFailed = false;
+            CapsRequest capReq = null;
+            bool shortCircuit = false;
+            bool requestFailed = false;
+
             if (cap != null)
             {
                 capReq = new CapsRequest(cap);
+
+                capReq.Method = meth;
 
                 if (cap.ReqFmt == CapsDataFormat.OSD)
                 {
@@ -665,6 +684,9 @@ namespace GridProxy
 
             byte[] respBuf = null;
             string consoleMsg = String.Empty;
+
+            bool reqrange = false;
+            bool resprange = false;
 
             if (shortCircuit)
             {
@@ -707,15 +729,19 @@ namespace GridProxy
 
                             if (range.Length == 2)
                             {
-                                if (int.TryParse(range[0], out from)
-                                    && int.TryParse(range[1], out to))
-                                {
+                                if(!int.TryParse(range[0], out from))
+                                    from = 0;
+                                if (int.TryParse(range[1], out to))
                                     req.AddRange(parts[0], from, to);
-                                }
+                                else
+                                    req.AddRange(parts[0], from);
+
+                                reqrange = true;
                             }
                             else if (range.Length == 1 && int.TryParse(range[0], out to))
                             {
                                 req.AddRange(parts[0], to);
+                                reqrange = true;
                             }
                         }
                     }
@@ -724,6 +750,7 @@ namespace GridProxy
                         req.Headers[header] = headers[header];
                     }
                 }
+
                 if (capReq != null)
                 {
                     capReq.RequestHeaders = req.Headers;
@@ -735,7 +762,7 @@ namespace GridProxy
                 // without throwing a protocol exception. So force it to post 
                 // incase our parser stupidly set it to GET due to the viewer 
                 // doing something stupid like sending an empty request
-                if (content.Length > 0)
+                if (content.Length > 0 && req.Method.ToLower() == "get")
                     req.Method = "POST";
 
                 req.ContentLength = content.Length;
@@ -814,7 +841,7 @@ namespace GridProxy
                     consoleMsg += "[" + reqNo + "] Response from " + uri + "\nStatus: " + (int)resp.StatusCode + " " + resp.StatusDescription + "\n";
 
                     {
-                        byte[] wr = Encoding.UTF8.GetBytes("HTTP/1.0 " + (int)resp.StatusCode + " " + resp.StatusDescription + "\r\n");
+                        byte[] wr = Encoding.UTF8.GetBytes("HTTP/1.1 " + (int)resp.StatusCode + " " + resp.StatusDescription + "\r\n");
                         netStream.Write(wr, 0, wr.Length);
                     }
 
@@ -826,11 +853,16 @@ namespace GridProxy
                         string key = resp.Headers.Keys[i];
                         string val = resp.Headers[i];
                         string lkey = key.ToLower();
-                        if (lkey != "content-length" && lkey != "transfer-encoding" && lkey != "connection")
+//                        if (lkey != "content-length" && lkey != "transfer-encoding" && lkey != "connection")
+                        if (lkey != "content-length" && lkey != "transfer-encoding")
                         {
                             consoleMsg += key + ": " + val + "\n";
                             byte[] wr = Encoding.UTF8.GetBytes(key + ": " + val + "\r\n");
                             netStream.Write(wr, 0, wr.Length);
+                        }
+                        if(lkey == "content-range")
+                        {
+                            resprange = true;
                         }
                     }
                 }
@@ -838,10 +870,16 @@ namespace GridProxy
                 {
                     // TODO: Should we handle this somehow?
                     OpenMetaverse.Logger.DebugLog("Failed writing output: " + ex.Message);
+                    return;
                 }
             }
 
-            if (cap != null && !requestFailed && !capReq.Response.ToString().Equals("undef"))
+            if(reqrange && !resprange)
+            {
+
+            }
+
+            if (cap != null && !requestFailed && (!capReq.Response.ToString().Equals("undef") || respBuf.Length > 0))
             {
                 foreach (CapsDelegate d in cap.GetDelegates())
                 {
@@ -859,14 +897,16 @@ namespace GridProxy
                         OpenMetaverse.Logger.Log("Error firing delegate", Helpers.LogLevel.Error, ex);
                     }
                 }
-
-                if (cap.RespFmt == CapsDataFormat.OSD)
+                if (!capReq.Response.ToString().Equals("undef"))
                 {
-                    respBuf = OSDParser.SerializeLLSDXmlBytes((OSD)capReq.Response);
-                }
-                else
-                {
-                    respBuf = OSDParser.SerializeLLSDXmlBytes(capReq.Response);
+                    if (cap.RespFmt == CapsDataFormat.OSD)
+                    {
+                        respBuf = OSDParser.SerializeLLSDXmlBytes((OSD)capReq.Response);
+                    }
+                    else
+                    {
+                        respBuf = OSDParser.SerializeLLSDXmlBytes(capReq.Response);
+                    }
                 }
             }
 
@@ -951,7 +991,6 @@ namespace GridProxy
         {
             lock (this)
             {
-
                 if (!KnownCapsDelegates.ContainsKey(CapName))
                 {
                     KnownCapsDelegates[CapName] = new List<CapsDelegate>();
@@ -1106,7 +1145,7 @@ namespace GridProxy
             return false;
         }
 
-        private void ProxyLogin(NetworkStream netStream, byte[] content)
+        private void ProxyLogin(NetworkStream netStream, byte[] content, Dictionary<string,string> headers )
         {
             lock (this)
             {
@@ -1117,13 +1156,13 @@ namespace GridProxy
                 // convert the body into an XML-RPC request
                 XmlRpcRequest request = (XmlRpcRequest)(new XmlRpcRequestDeserializer()).Deserialize(Encoding.UTF8.GetString(content));
 
+                string remoteLoginUri = proxyConfig.remoteLoginUri.ToString();
                 // call the loginRequestDelegate
                 lock (loginRequestDelegates)
                 {
                     foreach (XmlRpcRequestDelegate d in loginRequestDelegates)
                     {
-                        try { d(this, new XmlRpcRequestEventArgs(request)); }
-                        //try { d(request); }
+                        try { d(this, new XmlRpcRequestEventArgs(request, content.Length, headers, remoteLoginUri)); }
                         catch (Exception e) { OpenMetaverse.Logger.Log("Exception in login request delegate" + e, Helpers.LogLevel.Error, e); }
                     }
                 }
@@ -1131,8 +1170,7 @@ namespace GridProxy
                 try
                 {
                     // forward the XML-RPC request to the server
-                    response = (XmlRpcResponse)request.Send(proxyConfig.remoteLoginUri.ToString(),
-                        30 * 1000); // 30 second timeout
+                    response = (XmlRpcResponse)request.Send(remoteLoginUri, 30 * 1000); // 30 second timeout
                 }
                 catch (Exception e)
                 {
@@ -1140,16 +1178,18 @@ namespace GridProxy
                     return;
                 }
 
-                System.Collections.Hashtable responseData;
+                Hashtable responseData;
                 try
                 {
-                    responseData = (System.Collections.Hashtable)response.Value;
+                    responseData = (Hashtable)response.Value;
                 }
                 catch (Exception e)
                 {
                     OpenMetaverse.Logger.Log(e.Message, Helpers.LogLevel.Error);
                     return;
                 }
+
+                Hashtable ori = new Hashtable(responseData);
 
                 // proxy any simulator address given in the XML-RPC response
                 if (responseData.Contains("sim_ip") && responseData.Contains("sim_port"))
@@ -1168,21 +1208,25 @@ namespace GridProxy
                 {
                     CapInfo info = new CapInfo((string)responseData["seed_capability"], activeCircuit, "SeedCapability");
                     info.AddDelegate(new CapsDelegate(FixupSeedCapsResponse));
-
+                    info.AddDelegate(new CapsDelegate(KnownCapDelegate));
                     KnownCaps[(string)responseData["seed_capability"]] = info;
                     responseData["seed_capability"] = loginURI + responseData["seed_capability"];
                 }
 
                 // forward the XML-RPC response to the client
-                StreamWriter writer = new StreamWriter(netStream);
-                writer.Write("HTTP/1.0 200 OK\r\n");
-                writer.Write("Content-type: text/xml\r\n");
-                writer.Write("\r\n");
+                using(StreamWriter writer = new StreamWriter(netStream, new System.Text.UTF8Encoding(false)))
+                {
+                    writer.Write("HTTP/1.0 200 OK\r\n");
+                    writer.Write("Content-type: text/xml\r\n");
+                    writer.Write("\r\n");
 
-                XmlTextWriter responseWriter = new XmlTextWriter(writer);
-                XmlRpcResponseSerializer.Singleton.Serialize(responseWriter, response);
-                responseWriter.Close(); writer.Close();
-
+                    using(XmlTextWriter responseWriter = new XmlTextWriter(writer))
+                    {
+                        var xrpc = new XmlRpcResponseSerializer();
+                        xrpc.Serialize(responseWriter, response);
+                    }
+                }
+                response.Value = ori;
                 lock (loginResponseDelegates)
                 {
                     foreach (XmlRpcResponseDelegate d in loginResponseDelegates)
@@ -1191,7 +1235,6 @@ namespace GridProxy
                         catch (Exception e) { OpenMetaverse.Logger.Log("Exception in login response delegate" + e, Helpers.LogLevel.Error, e); }
                     }
                 }
-
             }
         }
 
@@ -1258,6 +1301,7 @@ namespace GridProxy
 
                 CapInfo info = new CapInfo(seed_capability, activeCircuit, "SeedCapability");
                 info.AddDelegate(new CapsDelegate(FixupSeedCapsResponse));
+                info.AddDelegate(new CapsDelegate(KnownCapDelegate));
 
                 KnownCaps[seed_capability] = info;
                 map["seed_capability"] = OSD.FromString(loginURI + seed_capability);
@@ -2027,6 +2071,8 @@ namespace GridProxy
             {
                 CapInfo info = new CapInfo(simCaps, realSim, "SeedCapability");
                 info.AddDelegate(new CapsDelegate(FixupSeedCapsResponse));
+                info.AddDelegate(new CapsDelegate(KnownCapDelegate));
+
                 lock (this)
                 {
                     KnownCaps[simCaps] = info;
@@ -2129,6 +2175,7 @@ namespace GridProxy
         {
             uri = URI; sim = Sim; type = CapType; reqFmt = ReqFmt; respFmt = RespFmt;
         }
+
         public string URI
         {
             get { return uri; }
@@ -2204,7 +2251,7 @@ namespace GridProxy
         public WebHeaderCollection ResponseHeaders = new WebHeaderCollection();
 
         public string FullUri = string.Empty;
-
+        public string Method = string.Empty;
     }
 
     // XmlRpcRequestDelegate: specifies a delegate to be called for XML-RPC requests
@@ -2239,10 +2286,16 @@ namespace GridProxy
     public class XmlRpcRequestEventArgs : EventArgs
     {
         public XmlRpcRequest m_Request;
+        public int m_originalSize;
+        public string m_host;
+        public Dictionary<string,string> m_headers;
 
-        public XmlRpcRequestEventArgs(XmlRpcRequest request)
+        public XmlRpcRequestEventArgs(XmlRpcRequest request, int originalSize, Dictionary<string, string> headers, string host)
         {
-            this.m_Request = request;
+            m_Request = request;
+            m_originalSize = originalSize;
+            m_headers = headers;
+            m_host = host;
         }
     }
 }

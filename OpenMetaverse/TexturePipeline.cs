@@ -521,7 +521,15 @@ namespace OpenMetaverse
                 }
 
                 // Queue was empty or all download slots are inuse, let's give up some CPU time
-                Thread.Sleep(500);
+								try { 
+                  Thread.Sleep(500);
+					      } catch(System.Threading.ThreadAbortException) {
+					        // Ignore if thread has been aborted by logoff
+									;
+				        }
+				        catch(Exception ex) {
+									throw;
+								}
             }
 
             Logger.Log("Texture pipeline shutting down", Helpers.LogLevel.Info);

@@ -99,15 +99,41 @@ namespace OpenMetaverse
         #endregion Constructors
 
         #region Public Methods
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void Abs()
+        {
+            X = Math.Abs(X);
+            Y = Math.Abs(Y);
+            Z = Math.Abs(Z);
+            W = Math.Abs(W);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void Min(Vector4 v)
+        {
+            if (v.X < X) X = v.X;
+            if (v.Y < Y) Y = v.Y;
+            if (v.Z < Z) Z = v.Z;
+            if (v.W < W) W = v.W;
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void Max(Vector4 v)
+        {
+            if (v.X > X) X = v.X;
+            if (v.Y > Y) Y = v.Y;
+            if (v.Z > Z) Z = v.Z;
+            if (v.W > W) W = v.W;
+        }
 
         public float Length()
         {
-            return (float)Math.Sqrt(DistanceSquared(this, Zero));
+            return (float)Math.Sqrt(X * X + Y * Y + Z * Z + W * W);
         }
 
         public float LengthSquared()
         {
-            return DistanceSquared(this, Zero);
+            return (X * X) + (Y * Y) + (Z * Z) + (W * W);
         }
 
         public void Normalize()
@@ -126,8 +152,18 @@ namespace OpenMetaverse
         /// is less than the given tolerance, otherwise false</returns>
         public bool ApproxEquals(Vector4 vec, float tolerance)
         {
-            Vector4 diff = this - vec;
-            return (diff.LengthSquared() <= tolerance * tolerance);
+            return Utils.ApproxEqual(X, vec.X, tolerance) &&
+                    Utils.ApproxEqual(Y, vec.Y, tolerance) &&
+                    Utils.ApproxEqual(Z, vec.Z, tolerance) &&
+                    Utils.ApproxEqual(W, vec.W, tolerance);
+        }
+
+        public bool ApproxEquals(Vector4 vec)
+        {
+            return Utils.ApproxEqual(X, vec.X) &&
+                    Utils.ApproxEqual(Y, vec.Y) &&
+                    Utils.ApproxEqual(Z, vec.Z) &&
+                    Utils.ApproxEqual(W, vec.W);
         }
 
         /// <summary>
@@ -153,31 +189,10 @@ namespace OpenMetaverse
         /// <param name="pos">Beginning position in the byte array</param>
         public void FromBytes(byte[] byteArray, int pos)
         {
-            if (!BitConverter.IsLittleEndian)
-            {
-                // Big endian architecture
-                byte[] conversionBuffer = new byte[16];
-
-                Buffer.BlockCopy(byteArray, pos, conversionBuffer, 0, 16);
-
-                Array.Reverse(conversionBuffer, 0, 4);
-                Array.Reverse(conversionBuffer, 4, 4);
-                Array.Reverse(conversionBuffer, 8, 4);
-                Array.Reverse(conversionBuffer, 12, 4);
-
-                X = BitConverter.ToSingle(conversionBuffer, 0);
-                Y = BitConverter.ToSingle(conversionBuffer, 4);
-                Z = BitConverter.ToSingle(conversionBuffer, 8);
-                W = BitConverter.ToSingle(conversionBuffer, 12);
-            }
-            else
-            {
-                // Little endian architecture
-                X = BitConverter.ToSingle(byteArray, pos);
-                Y = BitConverter.ToSingle(byteArray, pos + 4);
-                Z = BitConverter.ToSingle(byteArray, pos + 8);
-                W = BitConverter.ToSingle(byteArray, pos + 12);
-            }
+            X = Utils.BytesToFloatSafepos(byteArray, pos);
+            Y = Utils.BytesToFloatSafepos(byteArray, pos + 4);
+            Z = Utils.BytesToFloatSafepos(byteArray, pos + 8);
+            W = Utils.BytesToFloatSafepos(byteArray, pos + 12);
         }
 
         /// <summary>
@@ -186,9 +201,12 @@ namespace OpenMetaverse
         /// <returns>A 16 byte array containing X, Y, Z, and W</returns>
         public byte[] GetBytes()
         {
-            byte[] byteArray = new byte[16];
-            ToBytes(byteArray, 0);
-            return byteArray;
+            byte[] dest = new byte[16];
+            Utils.FloatToBytesSafepos(X, dest, 0);
+            Utils.FloatToBytesSafepos(Y, dest, 4);
+            Utils.FloatToBytesSafepos(Z, dest, 8);
+            Utils.FloatToBytesSafepos(W, dest, 12);
+            return dest;
         }
 
         /// <summary>
@@ -199,18 +217,10 @@ namespace OpenMetaverse
         /// writing. Must be at least 16 bytes before the end of the array</param>
         public void ToBytes(byte[] dest, int pos)
         {
-            Buffer.BlockCopy(BitConverter.GetBytes(X), 0, dest, pos + 0, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(Y), 0, dest, pos + 4, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(Z), 0, dest, pos + 8, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(W), 0, dest, pos + 12, 4);
-
-            if (!BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(dest, pos + 0, 4);
-                Array.Reverse(dest, pos + 4, 4);
-                Array.Reverse(dest, pos + 8, 4);
-                Array.Reverse(dest, pos + 12, 4);
-            }
+            Utils.FloatToBytesSafepos(X, dest, pos);
+            Utils.FloatToBytesSafepos(Y, dest, pos + 4);
+            Utils.FloatToBytesSafepos(Z, dest, pos + 8);
+            Utils.FloatToBytesSafepos(W, dest, pos + 12);
         }
 
         #endregion Public Methods
@@ -219,11 +229,12 @@ namespace OpenMetaverse
 
         public static Vector4 Add(Vector4 value1, Vector4 value2)
         {
-            value1.W += value2.W;
-            value1.X += value2.X;
-            value1.Y += value2.Y;
-            value1.Z += value2.Z;
-            return value1;
+            return new Vector4(
+                value1.W + value2.W,
+                value1.X + value2.X,
+                value1.Y + value2.Y,
+                value1.Z + value2.Z
+                );
         }
 
         public static Vector4 Clamp(Vector4 value1, Vector4 min, Vector4 max)
@@ -243,34 +254,36 @@ namespace OpenMetaverse
         public static float DistanceSquared(Vector4 value1, Vector4 value2)
         {
             return
-                (value1.W - value2.W) * (value1.W - value2.W) +
                 (value1.X - value2.X) * (value1.X - value2.X) +
                 (value1.Y - value2.Y) * (value1.Y - value2.Y) +
-                (value1.Z - value2.Z) * (value1.Z - value2.Z);
+                (value1.Z - value2.Z) * (value1.Z - value2.Z) +
+                (value1.W - value2.W) * (value1.W - value2.W);
         }
 
         public static Vector4 Divide(Vector4 value1, Vector4 value2)
         {
-            value1.W /= value2.W;
-            value1.X /= value2.X;
-            value1.Y /= value2.Y;
-            value1.Z /= value2.Z;
-            return value1;
+            return new Vector4(
+                value1.X / value2.X,
+                value1.Y / value2.Y,
+                value1.Z / value2.Z,
+                value1.W / value2.W
+                );
         }
 
         public static Vector4 Divide(Vector4 value1, float divider)
         {
             float factor = 1f / divider;
-            value1.W *= factor;
-            value1.X *= factor;
-            value1.Y *= factor;
-            value1.Z *= factor;
-            return value1;
+            return new Vector4(
+                value1.X * factor,
+                value1.Y * factor,
+                value1.Z * factor,
+                value1.W * factor
+                );
         }
 
         public static float Dot(Vector4 vector1, Vector4 vector2)
         {
-            return vector1.X * vector2.X + vector1.Y * vector2.Y + vector1.Z * vector2.Z + vector1.W * vector2.W;
+            return (vector1.X * vector2.X) + (vector1.Y * vector2.Y) + (vector1.Z * vector2.Z) + (vector1.W * vector2.W);
         }
 
         public static Vector4 Lerp(Vector4 value1, Vector4 value2, float amount)
@@ -302,51 +315,44 @@ namespace OpenMetaverse
 
         public static Vector4 Multiply(Vector4 value1, Vector4 value2)
         {
-            value1.W *= value2.W;
-            value1.X *= value2.X;
-            value1.Y *= value2.Y;
-            value1.Z *= value2.Z;
-            return value1;
+            return new Vector4(
+                value1.X * value2.X,
+                value1.Y * value2.Y,
+                value1.Z * value2.Z,
+                value1.W * value2.W);
         }
 
         public static Vector4 Multiply(Vector4 value1, float scaleFactor)
         {
-            value1.W *= scaleFactor;
-            value1.X *= scaleFactor;
-            value1.Y *= scaleFactor;
-            value1.Z *= scaleFactor;
-            return value1;
+            return new Vector4(
+                value1.X * scaleFactor,
+                value1.Y * scaleFactor,
+                value1.Z * scaleFactor,
+                value1.W * scaleFactor);
         }
 
         public static Vector4 Negate(Vector4 value)
         {
-            value.X = -value.X;
-            value.Y = -value.Y;
-            value.Z = -value.Z;
-            value.W = -value.W;
-            return value;
+            return new Vector4(
+                -value.X,
+                -value.Y,
+                -value.Z,
+                -value.W);
         }
 
         public static Vector4 Normalize(Vector4 vector)
         {
-            const float MAG_THRESHOLD = 0.0000001f;
-            float factor = DistanceSquared(vector, Zero);
-            if (factor > MAG_THRESHOLD)
+            float factor = vector.LengthSquared();
+            if (factor > 1e-6)
             {
                 factor = 1f / (float)Math.Sqrt(factor);
-                vector.X *= factor;
-                vector.Y *= factor;
-                vector.Z *= factor;
-                vector.W *= factor;
+                return new Vector4(
+                    vector.X * factor,
+                    vector.Y * factor,
+                    vector.Z * factor,
+                    vector.W * factor);
             }
-            else
-            {
-                vector.X = 0f;
-                vector.Y = 0f;
-                vector.Z = 0f;
-                vector.W = 0f;
-            }
-            return vector;
+            return Vector4.Zero;
         }
 
         public static Vector4 SmoothStep(Vector4 value1, Vector4 value2, float amount)
@@ -360,11 +366,11 @@ namespace OpenMetaverse
 
         public static Vector4 Subtract(Vector4 value1, Vector4 value2)
         {
-            value1.W -= value2.W;
-            value1.X -= value2.X;
-            value1.Y -= value2.Y;
-            value1.Z -= value2.Z;
-            return value1;
+            return new Vector4(
+                value1.W - value2.W,
+                value1.X - value2.X,
+                value1.Y - value2.Y,
+                value1.Z - value2.Z);
         }
 
         public static Vector4 Transform(Vector2 position, Matrix4 matrix)
@@ -465,10 +471,11 @@ namespace OpenMetaverse
 
         public static bool operator ==(Vector4 value1, Vector4 value2)
         {
-            return value1.W == value2.W
-                && value1.X == value2.X
+            return 
+                   value1.X == value2.X
                 && value1.Y == value2.Y
-                && value1.Z == value2.Z;
+                && value1.Z == value2.Z
+                && value1.W == value2.W;
         }
 
         public static bool operator !=(Vector4 value1, Vector4 value2)
@@ -478,11 +485,11 @@ namespace OpenMetaverse
 
         public static Vector4 operator +(Vector4 value1, Vector4 value2)
         {
-            value1.W += value2.W;
-            value1.X += value2.X;
-            value1.Y += value2.Y;
-            value1.Z += value2.Z;
-            return value1;
+            return new Vector4(
+                value1.X + value2.X,
+                value1.Y + value2.Y,
+                value1.Z + value2.Z,
+                value1.W + value2.W);
         }
 
         public static Vector4 operator -(Vector4 value)
@@ -492,48 +499,48 @@ namespace OpenMetaverse
 
         public static Vector4 operator -(Vector4 value1, Vector4 value2)
         {
-            value1.W -= value2.W;
-            value1.X -= value2.X;
-            value1.Y -= value2.Y;
-            value1.Z -= value2.Z;
-            return value1;
+            return new Vector4(
+                value1.X - value2.X,
+                value1.Y - value2.Y,
+                value1.Z - value2.Z,
+                value1.W - value2.W);
         }
 
         public static Vector4 operator *(Vector4 value1, Vector4 value2)
         {
-            value1.W *= value2.W;
-            value1.X *= value2.X;
-            value1.Y *= value2.Y;
-            value1.Z *= value2.Z;
-            return value1;
+            return new Vector4(
+                value1.X * value2.X,
+                value1.Y * value2.Y,
+                value1.Z * value2.Z,
+                value1.W * value2.W);
         }
 
         public static Vector4 operator *(Vector4 value1, float scaleFactor)
         {
-            value1.W *= scaleFactor;
-            value1.X *= scaleFactor;
-            value1.Y *= scaleFactor;
-            value1.Z *= scaleFactor;
-            return value1;
+            return new Vector4(
+                value1.X * scaleFactor,
+                value1.Y * scaleFactor,
+                value1.Z * scaleFactor,
+                value1.W * scaleFactor);
         }
 
         public static Vector4 operator /(Vector4 value1, Vector4 value2)
         {
-            value1.W /= value2.W;
-            value1.X /= value2.X;
-            value1.Y /= value2.Y;
-            value1.Z /= value2.Z;
-            return value1;
+            return new Vector4(
+                value1.X / value2.X,
+                value1.Y / value2.Y,
+                value1.Z / value2.Z,
+                value1.W / value2.W);
         }
 
         public static Vector4 operator /(Vector4 value1, float divider)
         {
-            float factor = 1f / divider;
-            value1.W *= factor;
-            value1.X *= factor;
-            value1.Y *= factor;
-            value1.Z *= factor;
-            return value1;
+            float scaleFactor = 1f / divider;
+            return new Vector4(
+                value1.X * scaleFactor,
+                value1.Y * scaleFactor,
+                value1.Z * scaleFactor,
+                value1.W * scaleFactor);
         }
 
         #endregion Operators
@@ -550,5 +557,7 @@ namespace OpenMetaverse
         public readonly static Vector4 UnitZ = new Vector4(0f, 0f, 1f, 0f);
         /// <summary>A vector with a value of 0,0,0,1</summary>
         public readonly static Vector4 UnitW = new Vector4(0f, 0f, 0f, 1f);
+        public readonly static Vector4 MinValue = new Vector4(float.MinValue, float.MinValue, float.MinValue, float.MinValue);
+        public readonly static Vector4 MaxValue = new Vector4(float.MaxValue, float.MaxValue, float.MaxValue, float.MaxValue);
     }
 }

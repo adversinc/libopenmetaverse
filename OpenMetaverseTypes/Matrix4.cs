@@ -417,36 +417,40 @@ namespace OpenMetaverse
             return m;
         }
 
-        public static Matrix4 CreateFromQuaternion(Quaternion quaternion)
+        public static Matrix4 CreateFromQuaternion(Quaternion rot)
         {
             Matrix4 matrix;
 
-            float xx = quaternion.X * quaternion.X;
-            float yy = quaternion.Y * quaternion.Y;
-            float zz = quaternion.Z * quaternion.Z;
-            float xy = quaternion.X * quaternion.Y;
-            float zw = quaternion.Z * quaternion.W;
-            float zx = quaternion.Z * quaternion.X;
-            float yw = quaternion.Y * quaternion.W;
-            float yz = quaternion.Y * quaternion.Z;
-            float xw = quaternion.X * quaternion.W;
+            float x2 = rot.X + rot.X;
+            float y2 = rot.Y + rot.Y;
+            float z2 = rot.Z + rot.Z;
 
-            matrix.M11 = 1f - (2f * (yy + zz));
-            matrix.M12 = 2f * (xy + zw);
-            matrix.M13 = 2f * (zx - yw);
+            float wx2 = rot.W * x2;
+            float wy2 = rot.W * y2;
+            float wz2 = rot.W * z2;
+            float xx2 = rot.X * x2;
+            float xy2 = rot.X * y2;
+            float xz2 = rot.X * z2;
+            float yy2 = rot.Y * y2;
+            float yz2 = rot.Y * z2;
+            float zz2 = rot.Z * z2;
+
+            matrix.M11 = 1.0f - yy2 - zz2;
+            matrix.M12 = xy2 - wz2;
+            matrix.M13 = xz2 + wy2;
             matrix.M14 = 0f;
 
-            matrix.M21 = 2f * (xy - zw);
-            matrix.M22 = 1f - (2f * (zz + xx));
-            matrix.M23 = 2f * (yz + xw);
+            matrix.M21 = xy2 + wz2;
+            matrix.M22 = 1.0f - xx2 - zz2;
+            matrix.M23 = yz2 - wx2;
             matrix.M24 = 0f;
 
-            matrix.M31 = 2f * (zx + yw);
-            matrix.M32 = 2f * (yz - xw);
-            matrix.M33 = 1f - (2f * (yy + xx));
+            matrix.M31 = xz2 - wy2;
+            matrix.M32 = yz2 + wx2;
+            matrix.M33 = 1.0f - xx2 - yy2;
             matrix.M34 = 0f;
 
-            matrix.M41 = matrix.M42 = matrix.M43 = 0f;
+            matrix.M43 = matrix.M42 = matrix.M41 = 0f;
             matrix.M44 = 1f;
 
             return matrix;

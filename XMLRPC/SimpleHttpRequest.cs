@@ -146,7 +146,7 @@ namespace Nwc.XmlRpc
 					try {
 						this._headers.Add((object)str2, (object)str3);
 					}
-					catch (Exception ex) {
+					catch {
 						Logger.WriteEntry("Duplicate header key in line: " + str1, LogLevel.Information);
 					}
 				}

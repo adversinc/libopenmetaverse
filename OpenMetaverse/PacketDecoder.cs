@@ -258,9 +258,9 @@ namespace OpenMetaverse.Packets
             result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
                                         "Velocity",
                                         new Vector3(
-                Utils.UInt16ToFloat(block, i, -128.0f, 128.0f),
-                Utils.UInt16ToFloat(block, i + 2, -128.0f, 128.0f),
-                Utils.UInt16ToFloat(block, i + 4, -128.0f, 128.0f)),
+                Utils.BytesUInt16ToFloat(block, i, -128.0f, 128.0f),
+                Utils.BytesUInt16ToFloat(block, i + 2, -128.0f, 128.0f),
+                Utils.BytesUInt16ToFloat(block, i + 4, -128.0f, 128.0f)),
                                         "Vector3");
             i += 6;
 
@@ -268,9 +268,9 @@ namespace OpenMetaverse.Packets
             result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
                                         "Acceleration",
                                         new Vector3(
-                Utils.UInt16ToFloat(block, i, -64.0f, 64.0f),
-                Utils.UInt16ToFloat(block, i + 2, -64.0f, 64.0f),
-                Utils.UInt16ToFloat(block, i + 4, -64.0f, 64.0f)),
+                Utils.BytesUInt16ToFloat(block, i, -64.0f, 64.0f),
+                Utils.BytesUInt16ToFloat(block, i + 2, -64.0f, 64.0f),
+                Utils.BytesUInt16ToFloat(block, i + 4, -64.0f, 64.0f)),
                                         "Vector3");
 
             i += 6;
@@ -278,19 +278,19 @@ namespace OpenMetaverse.Packets
             result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
                                         "Rotation",
                               new Quaternion(
-                Utils.UInt16ToFloat(block, i, -1.0f, 1.0f),
-                Utils.UInt16ToFloat(block, i + 2, -1.0f, 1.0f),
-                Utils.UInt16ToFloat(block, i + 4, -1.0f, 1.0f),
-                Utils.UInt16ToFloat(block, i + 6, -1.0f, 1.0f)),
+                Utils.BytesUInt16ToFloat(block, i, -1.0f, 1.0f),
+                Utils.BytesUInt16ToFloat(block, i + 2, -1.0f, 1.0f),
+                Utils.BytesUInt16ToFloat(block, i + 4, -1.0f, 1.0f),
+                Utils.BytesUInt16ToFloat(block, i + 6, -1.0f, 1.0f)),
                                         "Quaternion");
             i += 8;
             // Angular velocity (omega)
             result.AppendFormat("{0,30}: {1,-40} [{2}]",
                                         "AngularVelocity",
                               new Vector3(
-                Utils.UInt16ToFloat(block, i, -64.0f, 64.0f),
-                Utils.UInt16ToFloat(block, i + 2, -64.0f, 64.0f),
-                Utils.UInt16ToFloat(block, i + 4, -64.0f, 64.0f)),
+                Utils.BytesUInt16ToFloat(block, i, -64.0f, 64.0f),
+                Utils.BytesUInt16ToFloat(block, i + 2, -64.0f, 64.0f),
+                Utils.BytesUInt16ToFloat(block, i + 4, -64.0f, 64.0f)),
                                         "Vector3");
             //pos += 6;
             // TODO:  What is in these 6 bytes?
@@ -335,9 +335,13 @@ namespace OpenMetaverse.Packets
                                         "(" + point + ")",
                                         "AttachmentPoint");
 
-            // TODO: CRC
-
+            //CRC
+            result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                "CRC",
+                Utils.BytesToUInt(block, i),
+                "UInt");
             i += 4;
+
             // Material
             result.AppendFormat("{0,30}: {1,-3} {2,-36} [{3}]" + Environment.NewLine,
                 "Material",
@@ -374,6 +378,7 @@ namespace OpenMetaverse.Packets
 
             i += 12;
             // Compressed flags
+
             CompressedFlags flags = (CompressedFlags)Utils.BytesToUInt(block, i);
             result.AppendFormat("{0,30}: {1,-10} {2,-29} [{3}]" + Environment.NewLine,
                             "CompressedFlags",
@@ -483,7 +488,12 @@ namespace OpenMetaverse.Packets
 
             // Extra parameters TODO:
             Primitive prim = new Primitive();
-            i += prim.SetExtraParamsFromBytes(block, i);
+            int extrapLen = prim.SetExtraParamsFromBytes(block, i);
+            i += extrapLen;
+            result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                "ExtraParams[]",
+                extrapLen,
+                "byte[]");
 
             //Sound data
             if ((flags & CompressedFlags.HasSound) != 0)
@@ -538,7 +548,7 @@ namespace OpenMetaverse.Packets
                             nameValues[j] = nv;
                         }
                     }
-                    DecodeNameValue("NameValues", nameValues);
+                    result.AppendLine(DecodeNameValue("NameValues", nameValues));
                 }
             }
 
@@ -658,6 +668,17 @@ namespace OpenMetaverse.Packets
                 result.AppendLine(a);
             }
 
+            if ((flags & CompressedFlags.HasParticlesNew) != 0)
+            {
+                Primitive.ParticleSystem p = new Primitive.ParticleSystem(block, i);
+                result.AppendLine(DecodeObjectParticleSystem("ParticleSystemNEW", p));
+                i += 94;
+                if ((p.PartDataFlags & Primitive.ParticleSystem.ParticleDataFlags.DataGlow) != 0)
+                    i += 2;
+                if ((p.PartDataFlags & Primitive.ParticleSystem.ParticleDataFlags.DataBlend) != 0)
+                    i += 2;
+            }
+
             return result.ToString();
         }
 
@@ -669,14 +690,93 @@ namespace OpenMetaverse.Packets
                 return String.Format("{0,30}: {1,2} {2,-38} [{3}]",
                 fieldName + " (Tree Species)",
                 fieldData,
-                "(" + (Tree)(byte)fieldData + ")",
+                //"(" + (Tree)(byte)fieldData + ")",
+                "(" + (Tree)data[0] + ")",
                 fieldData.GetType().Name);
+            }
+            else if (data.Length == 76)
+            {
+                /* TODO: these are likely useful packed fields,
+                 * need to unpack them */
+                Vector4 col = Vector4.Zero;
+                Vector3 offset = Vector3.Zero;
+                Vector3 vel = Vector3.Zero;
+                Vector3 acc = Vector3.Zero;
+                Quaternion q = Quaternion.Identity;
+                Vector3 angvel = Vector3.Zero;
+
+                col.FromBytes(data, 0);
+                offset.FromBytes(data, 16);
+                vel.FromBytes(data, 28);
+                acc.FromBytes(data, 40);
+                q.FromBytes(data, 52, true);
+                angvel.FromBytes(data, 64);
+
+                StringBuilder result = new StringBuilder();
+                result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                                        "ColisionPlane",
+                                        col,
+                                        "Vector4");
+                result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                                        "Offset",
+                                        offset,
+                                        "Vector3");
+                result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                                        "Velocity",
+                                        vel,
+                                        "Vector3");
+                result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                                        "Acceleration",
+                                        acc,
+                                        "Vector3");
+                result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                                        "rotation",
+                                        q,
+                                        "Quaternion");
+                result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                                        "Omega",
+                                        angvel,
+                                        "Vector3");
+                return result.ToString();
             }
             else if (data.Length == 60)
             {
                 /* TODO: these are likely useful packed fields,
                  * need to unpack them */
-                return Utils.BytesToHexString((byte[])fieldData, String.Format("{0,30}", fieldName));
+                Vector3 offset = Vector3.Zero;
+                Vector3 vel = Vector3.Zero;
+                Vector3 acc = Vector3.Zero;
+                Quaternion q = Quaternion.Identity;
+                Vector3 angvel = Vector3.Zero;
+
+                offset.FromBytes(data, 0);
+                vel.FromBytes(data, 12);
+                acc.FromBytes(data, 24);
+                q.FromBytes(data, 36, true);
+                angvel.FromBytes(data, 48);
+
+                StringBuilder result = new StringBuilder();
+                result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                                        "Offset",
+                                        offset,
+                                        "Vector3");
+                result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                                        "Velocity",
+                                        vel,
+                                        "Vector3");
+                result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                                        "Acceleration",
+                                        acc,
+                                        "Vector3");
+                result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                                        "rotation",
+                                        q,
+                                        "Quaternion");
+                result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
+                                        "Omega",
+                                        angvel,
+                                        "Vector3");
+                return result.ToString();
             }
             else
             {
@@ -716,23 +816,27 @@ namespace OpenMetaverse.Packets
 
         private static string DecodeNameValue(string fieldName, object fieldData)
         {
-            string nameValue = Utils.BytesToString((byte[])fieldData);
             NameValue[] nameValues = null;
-            if (nameValue.Length > 0)
+            if (fieldData is NameValue[])
+                nameValues = fieldData as NameValue[];
+            else
             {
-                string[] lines = nameValue.Split('\n');
-                nameValues = new NameValue[lines.Length];
-
-                for (int i = 0; i < lines.Length; i++)
+                string nameValue = Utils.BytesToString((byte[])fieldData);
+                if (nameValue.Length > 0)
                 {
-                    if (!String.IsNullOrEmpty(lines[i]))
+                    string[] lines = nameValue.Split('\n');
+                    nameValues = new NameValue[lines.Length];
+
+                    for (int i = 0; i < lines.Length; i++)
                     {
-                        NameValue nv = new NameValue(lines[i]);
-                        nameValues[i] = nv;
+                        if (!String.IsNullOrEmpty(lines[i]))
+                        {
+                            NameValue nv = new NameValue(lines[i]);
+                            nameValues[i] = nv;
+                        }
                     }
                 }
             }
-
             StringBuilder result = new StringBuilder();
             result.AppendFormat("{0,30}", " <NameValues>" + Environment.NewLine);
             if (nameValues != null)
@@ -759,6 +863,9 @@ namespace OpenMetaverse.Packets
             Primitive.FlexibleData Flexible = null;
             Primitive.LightData Light = null;
             Primitive.SculptData Sculpt = null;
+            Primitive.SculptData Mesh = null;
+            uint meshFlags = 0;
+            bool hasmeshFlags = false;
 
             byte extraParamCount = data[i++];
 
@@ -776,7 +883,13 @@ namespace OpenMetaverse.Packets
                     Light = new Primitive.LightData(data, i);
                 else if (type == ExtraParamType.Sculpt)
                     Sculpt = new Primitive.SculptData(data, i);
-
+                else if (type == ExtraParamType.Mesh)
+                    Mesh = new Primitive.SculptData(data, i);
+                else if ((byte)type == 0x70)
+                {
+                    hasmeshFlags = true;
+                    meshFlags = Utils.BytesToUInt(data, i);
+                }
                 i += (int)paramLength;
                 //totalLength += (int)paramLength + 6;
             }
@@ -797,11 +910,25 @@ namespace OpenMetaverse.Packets
                 result.AppendFormat("{0,30}", "</Sculpt>" + Environment.NewLine);
             }
 
+            if (Mesh != null)
+            {
+                result.AppendFormat("{0,30}", "<Mesh>" + Environment.NewLine);
+                GenericTypeDecoder(Mesh, ref result);
+                result.AppendFormat("{0,30}", "</Mesh>" + Environment.NewLine);
+            }
+
             if (Light != null)
             {
                 result.AppendFormat("{0,30}", "<Light>" + Environment.NewLine);
                 GenericTypeDecoder(Light, ref result);
                 result.AppendFormat("{0,30}", "</Light>" + Environment.NewLine);
+            }
+
+            if (hasmeshFlags)
+            {
+                result.AppendFormat("{0,30}", "<MeshFlags>" + Environment.NewLine);
+                result.AppendFormat("{0,30}", meshFlags.ToString() + Environment.NewLine);
+                result.AppendFormat("{0,30}", "</MeshFlags>" + Environment.NewLine);
             }
 
             result.AppendFormat("{0,30}", "</ExtraParams>");
@@ -1493,7 +1620,7 @@ namespace OpenMetaverse.Packets
         {
             StringBuilder result = new StringBuilder();
 
-            result.AppendFormat("Packet Type: {0} http://lib.openmetaverse.co/wiki/{0} http://wiki.secondlife.com/wiki/{0}" + Environment.NewLine, packet.Type);
+            result.AppendFormat("Packet Type: {0}" + Environment.NewLine, packet.Type);
             result.AppendLine("[Packet Header]");
             // payload
             result.AppendFormat("Sequence: {0}" + Environment.NewLine, packet.Header.Sequence);
@@ -1541,11 +1668,11 @@ namespace OpenMetaverse.Packets
         private static void RecursePacketArray(FieldInfo fieldInfo, object packet, ref StringBuilder result)
         {
             var packetDataObject = fieldInfo.GetValue(packet);
-
+            int k = -1;
             foreach (object nestedArrayRecord in packetDataObject as Array)
             {
                 FieldInfo[] fields = nestedArrayRecord.GetType().GetFields();
-
+                ++k;
                 for (int i = 0; i < fields.Length; i++)
                 {
                     String special;
@@ -1557,14 +1684,14 @@ namespace OpenMetaverse.Packets
                     else if (fields[i].FieldType.IsArray) // default for an array (probably a byte[])
                     {
                         result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
-                            fields[i].Name,
+                            fields[i].Name + "[" + k.ToString() + "]",
                             Utils.BytesToString((byte[])fields[i].GetValue(nestedArrayRecord)),
                             /*fields[i].GetValue(nestedArrayRecord).GetType().Name*/ "String");
                     }
                     else // default for a field
                     {
                         result.AppendFormat("{0,30}: {1,-40} [{2}]" + Environment.NewLine,
-                            fields[i].Name,
+                            fields[i].Name + "[" + k.ToString() + "]",
                             fields[i].GetValue(nestedArrayRecord),
                             fields[i].GetValue(nestedArrayRecord).GetType().Name);
                     }
@@ -1702,7 +1829,7 @@ namespace OpenMetaverse.Packets
             // common/custom types
             if (recurseLevel <= 0)
             {
-                result.AppendFormat("Message Type: {0} http://lib.openmetaverse.co/wiki/{0}" + Environment.NewLine, message.GetType().Name);
+                result.AppendFormat("Message Type: {0}" + Environment.NewLine, message.GetType().Name);
             }
             else
             {

@@ -1109,6 +1109,15 @@ namespace OpenMetaverse
             remove { lock (m_InventoryObjectOfferedLock) { m_InventoryObjectOffered -= value; } }
         }
 
+		/// <summary>
+		/// Raises when inventory object is accepted or rejected
+		/// </summary>
+		public event EventHandler<InventoryOfferProcessedArgs> InventoryOfferProcessed;
+
+		private void OnInventoryOfferProcessed(InventoryOfferProcessedArgs args) {
+			InventoryOfferProcessed?.Invoke(this, args);
+		}
+
         /// <summary>The event subscribers, null of no subscribers</summary>
         private EventHandler<TaskItemReceivedEventArgs> m_TaskItemReceived;
 
@@ -1521,26 +1530,20 @@ namespace OpenMetaverse
         /// <remarks>InventoryFolder.DescendentCount will only be accurate if both folders and items are
         /// requested</remarks>
         public List<InventoryBase> FolderContents(UUID folder, UUID owner, bool folders, bool items,
-            InventorySortOrder order, int timeoutMS)
-        {
+            InventorySortOrder order, int timeoutMS) {
             List<InventoryBase> objects = null;
             AutoResetEvent fetchEvent = new AutoResetEvent(false);
 
             EventHandler<FolderUpdatedEventArgs> callback =
-                delegate(object sender, FolderUpdatedEventArgs e)
-                {
-                    if (e.FolderID == folder
-                        && _Store[folder] is InventoryFolder)
-                    {
+                delegate (object sender, FolderUpdatedEventArgs e) {
+                    if(e.FolderID == folder && _Store[folder] is InventoryFolder) {
                         // InventoryDescendentsHandler only stores DescendendCount if both folders and items are fetched.
-                        if (_Store.GetContents(folder).Count >= ((InventoryFolder)_Store[folder]).DescendentCount)
-                        {
-
+                        if(_Store.GetContents(folder).Count >= ((InventoryFolder)_Store[folder]).DescendentCount) {
                             fetchEvent.Set();
+                        } else {
+                            Logger.DebugLog($"FolderContents callback missing fetchEvent.Set: {_Store.GetContents(folder).Count} vs {((InventoryFolder)_Store[folder]).DescendentCount}", Client);
                         }
-                    }
-                    else
-                    {
+                    } else {
                         fetchEvent.Set();
                     }
                 };
@@ -1548,8 +1551,9 @@ namespace OpenMetaverse
             FolderUpdated += callback;
 
             RequestFolderContents(folder, owner, folders, items, order);
-            if (fetchEvent.WaitOne(timeoutMS, false))
+            if(fetchEvent.WaitOne(timeoutMS, false)) {
                 objects = _Store.GetContents(folder);
+            }
 
             FolderUpdated -= callback;
 
@@ -1566,14 +1570,10 @@ namespace OpenMetaverse
         /// <param name="order">the sort order to return items in</param>
         /// <seealso cref="InventoryManager.FolderContents"/>
         public void RequestFolderContents(UUID folder, UUID owner, bool folders, bool items,
-            InventorySortOrder order)
-        {
+            InventorySortOrder order) {
             string cap = owner == Client.Self.AgentID ? "FetchInventoryDescendents2" : "FetchLibDescendents2";
 
-            if (Client.Settings.HTTP_INVENTORY &&
-                Client.Network.CurrentSim.Caps != null &&
-                Client.Network.CurrentSim.Caps.CapabilityURI(cap) != null)
-            {
+            if(Client.Settings.HTTP_INVENTORY && Client.Network?.CurrentSim?.Caps?.CapabilityURI(cap) != null) {
                 RequestFolderContentsCap(folder, owner, folders, items, order);
                 return;
             }
@@ -1588,7 +1588,8 @@ namespace OpenMetaverse
             fetch.InventoryData.OwnerID = owner;
             fetch.InventoryData.SortOrder = (int)order;
 
-            Client.Network.SendPacket(fetch);
+            // TODO: process the missing network somehow
+            Client.Network?.SendPacket(fetch);
         }
 
         /// <summary>
@@ -3234,6 +3235,40 @@ namespace OpenMetaverse
             }
         }
 
+		public void AcceptInventoryOffer(InstantMessageDialog type, UUID ObjectID, UUID FromAgentID, UUID folder, UUID IMSessionID, bool accept = true) {
+			ImprovedInstantMessagePacket imp = new ImprovedInstantMessagePacket();
+			imp.AgentData.AgentID = Client.Self.AgentID;
+			imp.AgentData.SessionID = Client.Self.SessionID;
+			imp.MessageBlock.FromGroup = false;
+			imp.MessageBlock.ToAgentID = FromAgentID;
+			imp.MessageBlock.Offline = 0;
+			imp.MessageBlock.ID = IMSessionID;
+			imp.MessageBlock.Timestamp = 0;
+			imp.MessageBlock.FromAgentName = Utils.StringToBytes(Client.Self.Name);
+			imp.MessageBlock.Message = Utils.EmptyBytes;
+			imp.MessageBlock.ParentEstateID = 0;
+			imp.MessageBlock.RegionID = UUID.Zero;
+			imp.MessageBlock.Position = Client.Self.SimPosition;
+
+			switch(type) {
+				case InstantMessageDialog.InventoryOffered:
+					imp.MessageBlock.Dialog = accept ? (byte)InstantMessageDialog.InventoryAccepted : (byte)InstantMessageDialog.InventoryDeclined;
+					break;
+				case InstantMessageDialog.TaskInventoryOffered:
+					imp.MessageBlock.Dialog = accept ? (byte)InstantMessageDialog.TaskInventoryAccepted : (byte)InstantMessageDialog.TaskInventoryDeclined;
+					break;
+				case InstantMessageDialog.GroupNotice:
+					imp.MessageBlock.Dialog = accept ? (byte)InstantMessageDialog.GroupNoticeInventoryAccepted : (byte)InstantMessageDialog.GroupNoticeInventoryDeclined;
+					break;
+			}
+
+			imp.MessageBlock.BinaryBucket = accept ? folder.GetBytes() : Utils.EmptyBytes;
+
+			Client.Network.SendPacket(imp, Client.Network.CurrentSim);
+
+			OnInventoryOfferProcessed(new InventoryOfferProcessedArgs(type, ObjectID, FromAgentID, folder, accept));
+		}
+
         #endregion Rez/Give
 
         #region Task
@@ -4074,43 +4109,9 @@ namespace OpenMetaverse
 
                     OnInventoryObjectOffered(args);
 
-                    if (args.Accept)
-                    {
-                        // Accept the inventory offer
-                        switch (e.IM.Dialog)
-                        {
-                            case InstantMessageDialog.InventoryOffered:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.InventoryAccepted;
-                                break;
-                            case InstantMessageDialog.TaskInventoryOffered:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.TaskInventoryAccepted;
-                                break;
-                            case InstantMessageDialog.GroupNotice:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.GroupNoticeInventoryAccepted;
-                                break;
-                        }
-                        imp.MessageBlock.BinaryBucket = args.FolderID.GetBytes();
-                    }
-                    else
-                    {
-                        // Decline the inventory offer
-                        switch (e.IM.Dialog)
-                        {
-                            case InstantMessageDialog.InventoryOffered:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.InventoryDeclined;
-                                break;
-                            case InstantMessageDialog.TaskInventoryOffered:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.TaskInventoryDeclined;
-                                break;
-                            case InstantMessageDialog.GroupNotice:
-                                imp.MessageBlock.Dialog = (byte)InstantMessageDialog.GroupNoticeInventoryDeclined;
-                                break;
-                        }
-
-                        imp.MessageBlock.BinaryBucket = Utils.EmptyBytes;
-                    }
-
-                    Client.Network.SendPacket(imp, e.Simulator);
+										if(Client.Settings.RESPECT_INVENTORY_OFFER_ACCEPTS) {
+											AcceptInventoryOffer(e.IM.Dialog, objectID, e.IM.FromAgentID, destinationFolderID, e.IM.IMSessionID, args.Accept);
+									}
                 }
                 catch (Exception ex)
                 {
@@ -4911,37 +4912,61 @@ namespace OpenMetaverse
         #endregion Packet Handlers
     }
 
-    #region EventArgs
+#region EventArgs
 
-    public class InventoryObjectOfferedEventArgs : EventArgs
-    {
-        private readonly InstantMessage m_Offer;
-        private readonly AssetType m_AssetType;
-        private readonly UUID m_ObjectID;
-        private readonly bool m_FromTask;
+	public class InventoryOfferProcessedArgs: EventArgs {
+		/// <summary>The type of the inventory offer</summary>
+		public InstantMessageDialog Type { get; }
 
-        /// <summary>Set to true to accept offer, false to decline it</summary>
-        public bool Accept { get; set; }
-        /// <summary>The folder to accept the inventory into, if null default folder for <see cref="AssetType"/> will be used</summary>
-        public UUID FolderID { get; set; }
+		/// <summary>Object ID (UUID.Zero for task offers)</summary>
+		public UUID ObjectID { get; }
 
-        public InstantMessage Offer { get { return m_Offer; } }
-        public AssetType AssetType { get { return m_AssetType; } }
-        public UUID ObjectID { get { return m_ObjectID; } }
-        public bool FromTask { get { return m_FromTask; } }
+		/// <summary>Sender avatar</summary>
+		public UUID FromAgentID { get; }
 
-        public InventoryObjectOfferedEventArgs(InstantMessage offerDetails, AssetType type, UUID objectID, bool fromTask, UUID folderID)
-        {
-            this.Accept = false;
-            this.FolderID = folderID;
-            this.m_Offer = offerDetails;
-            this.m_AssetType = type;
-            this.m_ObjectID = objectID;
-            this.m_FromTask = fromTask;
-        }
-    }
+		/// <summary>Target folder</summary>
+		public UUID Folder { get; }
 
-    public class FolderUpdatedEventArgs : EventArgs
+		/// <summary>If item was accepted</summary>
+		public bool Accept { get; }
+
+		public InventoryOfferProcessedArgs(InstantMessageDialog type, UUID objectID, UUID fromAgentID, UUID folder, bool accept) {
+			this.Type = type;
+			this.ObjectID = objectID;
+			this.FromAgentID = fromAgentID;
+			this.Folder = folder;
+			this.Accept = accept;
+		}
+	}
+
+
+	public class InventoryObjectOfferedEventArgs : EventArgs {
+		private readonly InstantMessage m_Offer;
+		private readonly AssetType m_AssetType;
+		private readonly UUID m_ObjectID;
+		private readonly bool m_FromTask;
+
+		/// <summary>Set to true to accept offer, false to decline it</summary>
+		public bool Accept { get; set; }
+		/// <summary>The folder to accept the inventory into, if null default folder for <see cref="AssetType"/> will be used</summary>
+		public UUID FolderID { get; set; }
+
+		public InstantMessage Offer { get { return m_Offer; } }
+		public AssetType AssetType { get { return m_AssetType; } }
+		public UUID ObjectID { get { return m_ObjectID; } }
+		public bool FromTask { get { return m_FromTask; } }
+
+		public InventoryObjectOfferedEventArgs(InstantMessage offerDetails, AssetType type, UUID objectID, bool fromTask, UUID folderID) {
+			this.Accept = false;
+			this.FolderID = folderID;
+			this.m_Offer = offerDetails;
+			this.m_AssetType = type;
+			this.m_ObjectID = objectID;
+			this.m_FromTask = fromTask;
+		}
+	}
+
+	public class FolderUpdatedEventArgs : EventArgs
     {
         private readonly UUID m_FolderID;
         public UUID FolderID { get { return m_FolderID; } }

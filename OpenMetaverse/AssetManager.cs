@@ -321,6 +321,8 @@ namespace OpenMetaverse
         /// <param name="assetMesh">Resulting mesh or null on problems</param>
         public delegate void MeshDownloadCallback(bool success, AssetMesh assetMesh);
 
+		public delegate void RequestAssetDownloadCallback(Asset asset);
+
         #endregion Delegates
 
         #region Events
@@ -1480,7 +1482,7 @@ namespace OpenMetaverse
                 // will need to become smarter
                 if (download.Status != StatusCode.OK)
                 {
-                    Logger.Log("Transfer failed with status code " + download.Status, Helpers.LogLevel.Warning, Client);
+                    // Logger.Log("Transfer failed with status code " + download.Status, Helpers.LogLevel.Warning, Client);
 
                     lock (Transfers) Transfers.Remove(download.ID);
 
@@ -1865,11 +1867,56 @@ namespace OpenMetaverse
             }
         }
 
-        #endregion Xfer Callbacks
-    }
-    #region EventArg classes
-    // <summary>Provides data for XferReceived event</summary>
-    public class XferReceivedEventArgs : EventArgs
+		#endregion Xfer Callbacks
+
+		#region CAPS asset download
+		public void RequestAssetDownload(UUID uuid, AssetType type, RequestAssetDownloadCallback callback) {
+			string typeName = "";
+			try { typeName = Utils.AssetTypeToString(type); } catch { }
+			if(typeName == "") {
+				Logger.Log("Can not determine type name for caps URI", Helpers.LogLevel.Error, Client);
+
+				callback(null);
+				return;
+			}
+
+
+			var capsURI = Client.Network.CurrentSim.Caps.CapabilityURI("ViewerAsset");
+			if(capsURI == null) {
+				Logger.Log("ViewerAsset caps not found", Helpers.LogLevel.Error, Client);
+
+				callback(null);
+				return;
+			}
+
+			DownloadRequest req = new DownloadRequest(
+				new Uri(capsURI + $"/?{typeName}_id=" + uuid.ToString()),
+				Client.Settings.CAPS_TIMEOUT,
+				null,
+				null,
+				(HttpWebRequest request, HttpWebResponse response, byte[] responseData, Exception error) => {
+					if(error != null || responseData == null) {
+						var err = (error == null) ? "" : error.Message;
+						Logger.Log($"Failed to fetch asset {uuid}: {err}", Helpers.LogLevel.Warning, Client);
+
+						callback(null);
+						return;
+					}
+
+					// Success! Compose new asset
+					callback(new AssetGeneric(uuid, responseData));
+					Client.Assets.Cache.SaveAssetToCache(uuid, responseData);
+				}
+			);
+
+			HttpDownloads.QueueDownload(req);
+		}
+		#endregion
+	}
+
+	#region EventArg classes
+	// <summary>Provides data for XferReceived event</summary>
+	public class XferReceivedEventArgs : EventArgs
     {
         private readonly XferDownload m_Xfer;
 

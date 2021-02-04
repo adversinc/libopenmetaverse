@@ -120,96 +120,118 @@ namespace OpenMetaverse
                 return null;
         }
 
-        private void MakeSeedRequest()
-        {
-            if (Simulator == null || !Simulator.Client.Network.Connected)
-                return;
+		private void MakeSeedRequest() {
+			if(Simulator == null || !Simulator.Client.Network.Connected)
+				return;
 
-            // Create a request list
-            OSDArray req = new OSDArray();
-            // This list can be updated by using the following command to obtain a current list of capabilities the official linden viewer supports:
-            // wget -q -O - https://bitbucket.org/lindenlab/viewer-release/raw/default/indra/newview/llviewerregion.cpp | grep 'capabilityNames.append'  | sed 's/^[ \t]*//;s/capabilityNames.append("/req.Add("/'
-            req.Add("AgentPreferences");
-            req.Add("AgentState");
-            req.Add("AttachmentResources");
-            req.Add("AvatarPickerSearch");
-            req.Add("AvatarRenderInfo");
-            req.Add("CharacterProperties");
-            req.Add("ChatSessionRequest");
-            req.Add("CopyInventoryFromNotecard");
-            req.Add("CreateInventoryCategory");
-            req.Add("DispatchRegionInfo");
-            req.Add("EnvironmentSettings");
-            req.Add("EstateChangeInfo");
-            req.Add("EventQueueGet");
-            req.Add("FacebookConnect");
-            req.Add("FlickrConnect");
-            req.Add("TwitterConnect");
-            req.Add("FetchLib2");
-            req.Add("FetchLibDescendents2");
-            req.Add("FetchInventory2");
-            req.Add("FetchInventoryDescendents2");
-            req.Add("IncrementCOFVersion");
-            req.Add("GetDisplayNames");
-            req.Add("GetMesh");
-            req.Add("GetMesh2");
-            req.Add("GetObjectCost");
-            req.Add("GetObjectPhysicsData");
-            req.Add("GetTexture");
-            req.Add("GroupAPIv1");
-            req.Add("GroupMemberData");
-            req.Add("GroupProposalBallot");
-            req.Add("HomeLocation");
-            req.Add("LandResources");
-            req.Add("LSLSyntax");
-            req.Add("MapLayer");
-            req.Add("MapLayerGod");
-            req.Add("MeshUploadFlag");
-            req.Add("NavMeshGenerationStatus");
-            req.Add("NewFileAgentInventory");
-            req.Add("ObjectMedia");
-            req.Add("ObjectMediaNavigate");
-            req.Add("ObjectNavMeshProperties");
-            req.Add("ParcelPropertiesUpdate");
-            req.Add("ParcelVoiceInfoRequest");
-            req.Add("ProductInfoRequest");
-            req.Add("ProvisionVoiceAccountRequest");
-            req.Add("RemoteParcelRequest");
-            req.Add("RenderMaterials");
-            req.Add("RequestTextureDownload");
-            req.Add("ResourceCostSelected");
-            req.Add("RetrieveNavMeshSrc");
-            req.Add("SearchStatRequest");
-            req.Add("SearchStatTracking");
-            req.Add("SendPostcard");
-            req.Add("SendUserReport");
-            req.Add("SendUserReportWithScreenshot");
-            req.Add("ServerReleaseNotes");
-            req.Add("SetDisplayName");
-            req.Add("SimConsoleAsync");
-            req.Add("SimulatorFeatures");
-            req.Add("StartGroupProposal");
-            req.Add("TerrainNavMeshProperties");
-            req.Add("TextureStats");
-            req.Add("UntrustedSimulatorMessage");
-            req.Add("UpdateAgentInformation");
-            req.Add("UpdateAgentLanguage");
-            req.Add("UpdateAvatarAppearance");
-            req.Add("UpdateGestureAgentInventory");
-            req.Add("UpdateGestureTaskInventory");
-            req.Add("UpdateNotecardAgentInventory");
-            req.Add("UpdateNotecardTaskInventory");
-            req.Add("UpdateScriptAgent");
-            req.Add("UpdateScriptTask");
-            req.Add("UploadBakedTexture");
-            req.Add("ViewerMetrics");
-            req.Add("ViewerStartAuction");
-            req.Add("ViewerStats");
+			// Create a request list
+			OSDArray req = new OSDArray();
+			// This list can be updated by using the following command to obtain a current list of capabilities the official linden viewer supports:
+			// wget -q -O - https://bitbucket.org/lindenlab/viewer-release/raw/default/indra/newview/llviewerregion.cpp | grep 'capabilityNames.append'  | sed 's/^[ \t]*//;s/capabilityNames.append("/req.Add("/'
+			req.Add("AbuseCategories");
+			req.Add("AcceptFriendship");
+			req.Add("AcceptGroupInvite"); // ReadOfflineMsgs recieved messages only!!!
+			req.Add("AgentPreferences");
+			req.Add("AgentState");
+			req.Add("AttachmentResources");
+			req.Add("AvatarPickerSearch");
+			req.Add("AvatarRenderInfo");
+			req.Add("CharacterProperties");
+			req.Add("ChatSessionRequest");
+			req.Add("CopyInventoryFromNotecard");
+			req.Add("CreateInventoryCategory");
+			req.Add("DeclineFriendship");
+			req.Add("DeclineGroupInvite"); // ReadOfflineMsgs recieved messages only!!!
+			req.Add("DispatchRegionInfo");
+			req.Add("DirectDelivery");
+			req.Add("EnvironmentSettings");
+			req.Add("EstateAccess");
+			req.Add("EstateChangeInfo");
+			req.Add("EventQueueGet");
+			req.Add("FetchLib2");
+			req.Add("FetchLibDescendents2");
+			req.Add("FetchInventory2");
+			req.Add("FetchInventoryDescendents2");
+			req.Add("IncrementCOFVersion");
+			req.Add("GetDisplayNames");
+			req.Add("GetExperiences");
+			req.Add("AgentExperiences");
+			req.Add("FindExperienceByName");
+			req.Add("GetExperienceInfo");
+			req.Add("GetAdminExperiences");
+			req.Add("GetCreatorExperiences");
+			req.Add("ExperiencePreferences");
+			req.Add("GroupExperiences");
+			req.Add("UpdateExperience");
+			req.Add("IsExperienceAdmin");
+			req.Add("IsExperienceContributor");
+			req.Add("RegionExperiences");
+			req.Add("GetMetadata");
+			req.Add("GetObjectCost");
+			req.Add("GetObjectPhysicsData");
+			req.Add("GroupAPIv1");
+			req.Add("GroupMemberData");
+			req.Add("GroupProposalBallot");
+			req.Add("HomeLocation");
+			req.Add("LandResources");
+			req.Add("LSLSyntax");
+			req.Add("MapLayer");
+			req.Add("MapLayerGod");
+			req.Add("MeshUploadFlag");
+			req.Add("NavMeshGenerationStatus");
+			req.Add("NewFileAgentInventory");
+			req.Add("ObjectAnimation");
+			req.Add("ObjectMedia");
+			req.Add("ObjectMediaNavigate");
+			req.Add("ObjectNavMeshProperties");
+			req.Add("ParcelPropertiesUpdate");
+			req.Add("ParcelVoiceInfoRequest");
+			req.Add("ProductInfoRequest");
+			req.Add("ProvisionVoiceAccountRequest");
+			req.Add("ReadOfflineMsgs"); // Requires to respond reliably: AcceptFriendship, AcceptGroupInvite, DeclineFriendship, DeclineGroupInvite
+			req.Add("RemoteParcelRequest");
+			req.Add("RenderMaterials");
+			req.Add("RequestTextureDownload");
+			req.Add("ResourceCostSelected");
+			req.Add("RetrieveNavMeshSrc");
+			req.Add("SearchStatRequest");
+			req.Add("SearchStatTracking");
+			req.Add("SendPostcard");
+			req.Add("SendUserReport");
+			req.Add("SendUserReportWithScreenshot");
+			req.Add("ServerReleaseNotes");
+			req.Add("SetDisplayName");
+			req.Add("SimConsoleAsync");
+			req.Add("SimulatorFeatures");
+			req.Add("StartGroupProposal");
+			req.Add("TerrainNavMeshProperties");
+			req.Add("TextureStats");
+			req.Add("UntrustedSimulatorMessage");
+			req.Add("UpdateAgentInformation");
+			req.Add("UpdateAgentLanguage");
+			req.Add("UpdateAvatarAppearance");
+			req.Add("UpdateGestureAgentInventory");
+			req.Add("UpdateGestureTaskInventory");
+			req.Add("UpdateNotecardAgentInventory");
+			req.Add("UpdateNotecardTaskInventory");
+			req.Add("UpdateScriptAgent");
+			req.Add("UpdateScriptTask");
+			req.Add("UploadBakedTexture");
+			req.Add("UserInfo");
+			req.Add("ViewerAsset");
+			req.Add("ViewerMetrics");
+			req.Add("ViewerStartAuction");
+			req.Add("ViewerStats");
 
-            _SeedRequest = new CapsClient(new Uri(_SeedCapsURI));
-            _SeedRequest.OnComplete += new CapsClient.CompleteCallback(SeedRequestCompleteHandler);
-            _SeedRequest.BeginGetResponse(req, OSDFormat.Xml, Simulator.Client.Settings.CAPS_TIMEOUT);
-        }
+			// Missing from viewer, still used
+			req.Add("GetMesh");
+			req.Add("GetMesh2");
+
+
+			_SeedRequest = new CapsClient(new Uri(_SeedCapsURI));
+			_SeedRequest.OnComplete += new CapsClient.CompleteCallback(SeedRequestCompleteHandler);
+			_SeedRequest.BeginGetResponse(req, OSDFormat.Xml, Simulator.Client.Settings.CAPS_TIMEOUT);
+		}
 
         private void SeedRequestCompleteHandler(CapsClient client, OSD result, Exception error)
         {

@@ -259,36 +259,34 @@ namespace OpenMetaverse
                 }
                 else if (size > LegacyDataBlockSize && size <= MaxDataBlockSize)
                 {
-                    int sysSize = pack.UnpackBits(32);
+                    int sysSize = pack.UnpackInt();
                     if (sysSize != SysDataSize) return; // unkown particle system data size
                     UnpackSystem(ref pack);
-                    int dataSize = pack.UnpackBits(32);
+                    int dataSize = pack.UnpackInt();
                     UnpackLegacyData(ref pack);
-
 
                     if ((PartDataFlags & ParticleDataFlags.DataGlow) == ParticleDataFlags.DataGlow)
                     {
                         if (pack.Data.Length - pack.BytePos < 2) return;
-                        uint glow = pack.UnpackUBits(8);
+                        uint glow = pack.UnpackByte();
                         PartStartGlow = glow / 255f;
-                        glow = pack.UnpackUBits(8);
+                        glow = pack.UnpackByte();
                         PartEndGlow = glow / 255f;
                     }
 
                     if ((PartDataFlags & ParticleDataFlags.DataBlend) == ParticleDataFlags.DataBlend)
                     {
                         if (pack.Data.Length - pack.BytePos < 2) return;
-                        BlendFuncSource = (byte)pack.UnpackUBits(8);
-                        BlendFuncDest = (byte)pack.UnpackUBits(8);
+                        BlendFuncSource = pack.UnpackByte();
+                        BlendFuncDest = pack.UnpackByte();
                     }
-
                 }
             }
 
             void UnpackSystem(ref BitPack pack)
             {
-                CRC = pack.UnpackUBits(32);
-                PartFlags = pack.UnpackUBits(32);
+                CRC = pack.UnpackUInt();
+                PartFlags = pack.UnpackUInt();
                 Pattern = (SourcePattern)pack.UnpackByte();
                 MaxAge = pack.UnpackFixed(false, 8, 8);
                 StartAge = pack.UnpackFixed(false, 8, 8);
@@ -313,7 +311,7 @@ namespace OpenMetaverse
 
             void UnpackLegacyData(ref BitPack pack)
             {
-                PartDataFlags = (ParticleDataFlags)pack.UnpackUBits(32);
+                PartDataFlags = (ParticleDataFlags)pack.UnpackUInt();
                 PartMaxAge = pack.UnpackFixed(false, 8, 8);
                 byte r = pack.UnpackByte();
                 byte g = pack.UnpackByte();
@@ -355,24 +353,24 @@ namespace OpenMetaverse
                     if (HasGlow()) PartDataFlags |= ParticleDataFlags.DataGlow;
                     if (HasBlendFunc()) PartDataFlags |= ParticleDataFlags.DataBlend;
 
-                    pack.PackBits(SysDataSize, 32);
+                    pack.PackBitsFromUInt((uint)SysDataSize);
                     PackSystemBytes(ref pack);
                     int partSize = PartDataSize;
                     if (HasGlow()) partSize += 2; // two bytes for start and end glow
                     if (HasBlendFunc()) partSize += 2; // two bytes for start end end blend function
-                    pack.PackBits(partSize, 32);
+                    pack.PackBitsFromUInt((uint)partSize);
                     PackLegacyData(ref pack);
 
                     if (HasGlow())
                     {
-                        pack.PackBits((byte)(PartStartGlow * 255f), 8);
-                        pack.PackBits((byte)(PartEndGlow * 255f), 8);
+                        pack.PackBitsFromByte((byte)(PartStartGlow * 255f));
+                        pack.PackBitsFromByte((byte)(PartEndGlow * 255f));
                     }
 
                     if (HasBlendFunc())
                     {
-                        pack.PackBits(BlendFuncSource, 8);
-                        pack.PackBits(BlendFuncDest, 8);
+                        pack.PackBitsFromByte(BlendFuncSource);
+                        pack.PackBitsFromByte(BlendFuncDest);
                     }
                 }
 
@@ -381,9 +379,9 @@ namespace OpenMetaverse
 
             void PackSystemBytes(ref BitPack pack)
             {
-                pack.PackBits(CRC, 32);
-                pack.PackBits((uint)PartFlags, 32);
-                pack.PackBits((uint)Pattern, 8);
+                pack.PackBitsFromUInt(CRC);
+                pack.PackBitsFromUInt(PartFlags);
+                pack.PackBitsFromByte((byte)Pattern);
                 pack.PackFixed(MaxAge, false, 8, 8);
                 pack.PackFixed(StartAge, false, 8, 8);
                 pack.PackFixed(InnerAngle, false, 3, 5);
@@ -392,7 +390,7 @@ namespace OpenMetaverse
                 pack.PackFixed(BurstRadius, false, 8, 8);
                 pack.PackFixed(BurstSpeedMin, false, 8, 8);
                 pack.PackFixed(BurstSpeedMax, false, 8, 8);
-                pack.PackBits(BurstPartCount, 8);
+                pack.PackBitsFromByte(BurstPartCount);
                 pack.PackFixed(AngularVelocity.X, true, 8, 7);
                 pack.PackFixed(AngularVelocity.Y, true, 8, 7);
                 pack.PackFixed(AngularVelocity.Z, true, 8, 7);
@@ -405,7 +403,7 @@ namespace OpenMetaverse
 
             void PackLegacyData(ref BitPack pack)
             {
-                pack.PackBits((uint)PartDataFlags, 32);
+                pack.PackBitsFromUInt((uint)PartDataFlags);
                 pack.PackFixed(PartMaxAge, false, 8, 8);
                 pack.PackColor(PartStartColor);
                 pack.PackColor(PartEndColor);

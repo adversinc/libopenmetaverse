@@ -498,9 +498,13 @@ namespace OpenMetaverse
             }
             else
             {
+								string uuid = (Client?.Self != null)? Client.Self.AgentID.ToString(): "???";
+								string simName = (simulator != null) ? simulator.Name : "-- null sim --";
+								bool connected = (simulator != null) ? simulator.Connected : false;
                 //throw new NotConnectedException("Packet received before simulator packet processing threads running, make certain you are completely logged in");
-                Logger.Log("Packet received before simulator packet processing threads running, make certain you are completely logged in.", Helpers.LogLevel.Error);
-            }
+                Logger.Log($"{uuid} Packet requested but sim '{simName}' is not available (connected: {connected})", Helpers.LogLevel.Error);
+
+						}
         }
 
         /// <summary>
@@ -692,8 +696,9 @@ namespace OpenMetaverse
             timeout.Interval = Client.Settings.LOGOUT_TIMEOUT;
             timeout.Elapsed += delegate(object sender, System.Timers.ElapsedEventArgs e) {
                 timeout.Stop();
-                Shutdown(DisconnectType.NetworkTimeout);
-                OnLoggedOut(new LoggedOutEventArgs(new List<UUID>()));
+                Shutdown(DisconnectType.NetworkTimeout, "at BeginLogout");
+
+								OnLoggedOut(new LoggedOutEventArgs(new List<UUID>()));
             };
             timeout.Start();
 
@@ -722,9 +727,10 @@ namespace OpenMetaverse
             // will be fired in the callback. Otherwise we fire it manually with
             // a NetworkTimeout type
             if (!logoutEvent.WaitOne(Client.Settings.LOGOUT_TIMEOUT, false))
-                Shutdown(DisconnectType.NetworkTimeout);
+                Shutdown(DisconnectType.NetworkTimeout, "at Logout");
 
-            LoggedOut -= callback;
+
+						LoggedOut -= callback;
         }
 
         /// <summary>
@@ -745,6 +751,7 @@ namespace OpenMetaverse
             {
                 Logger.Log("Ignoring RequestLogout(), client is already logged out", Helpers.LogLevel.Warning, Client);
                 return;
+								//Logger.Log("Logging out despite of client is already being logged out", Helpers.LogLevel.Warning, Client);
             }
 
             Logger.Log("Logging out", Helpers.LogLevel.Info, Client);
@@ -804,10 +811,11 @@ namespace OpenMetaverse
         /// <param name="message">Shutdown message</param>
         public void Shutdown(DisconnectType type, string message)
         {
-            Logger.Log("NetworkManager shutdown initiated", Helpers.LogLevel.Info, Client);
+            Logger.Log($"NetworkManager shutdown initiated: {message}", Helpers.LogLevel.Info, Client);
+						//Logger.Log($"Stack: {Environment.StackTrace}", Helpers.LogLevel.Info, Client);
 
-            // Send a CloseCircuit packet to simulators if we are initiating the disconnect
-            bool sendCloseCircuit = (type == DisconnectType.ClientInitiated || type == DisconnectType.NetworkTimeout);
+						// Send a CloseCircuit packet to simulators if we are initiating the disconnect
+						bool sendCloseCircuit = (type == DisconnectType.ClientInitiated || type == DisconnectType.NetworkTimeout);
 
             lock (Simulators)
             {
@@ -1000,8 +1008,9 @@ namespace OpenMetaverse
                 connected = false;
 
                 // Shutdown the network layer
-                Shutdown(DisconnectType.NetworkTimeout);
-            }
+                Shutdown(DisconnectType.NetworkTimeout, "at DisconnectTimer_Elapsed");
+
+						}
             else
             {
                 // Mark the current simulator as potentially disconnected each time this timer fires.
@@ -1273,6 +1282,7 @@ namespace OpenMetaverse
             string message = Utils.BytesToString(((KickUserPacket)e.Packet).UserInfo.Reason);
 
             // Shutdown the network layer
+						Logger.Log("Implicit ServerInitiated disconnect", Helpers.LogLevel.Info, Client);
             Shutdown(DisconnectType.ServerInitiated, message);
         }
 

@@ -1290,6 +1290,21 @@ namespace OpenMetaverse
             LoginReplyXmlRpcHandler(response, newContext);
         }
 
+				/// <summary>
+				/// Connect to the simulator after the successful remote XMLRPC login attempt.
+				/// </summary>
+				/// <param name="response"></param>
+				/// <param name="loginID"></param>
+				public void LoginReplyXmlRpcHandler(XmlRpcResponse response, UUID loginID) {
+					var loginParams = new LoginParams();
+					loginParams.LoginID = loginID;
+
+					// Simulate CurrentContext
+					CurrentContext = loginParams;
+
+					LoginReplyXmlRpcHandler(response, loginParams);
+				}
+
 
         /// <summary>
         /// Handles response from XML-RPC login replies
@@ -1609,6 +1624,8 @@ namespace OpenMetaverse
         public static string GetMAC()
         {
             string mac = String.Empty;
+
+						if(forceMAC != "") { return forceMAC; }
 
             try
             {
