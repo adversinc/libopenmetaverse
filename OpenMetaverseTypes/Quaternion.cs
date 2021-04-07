@@ -34,18 +34,18 @@ namespace OpenMetaverse
     [StructLayout(LayoutKind.Sequential)]
     public struct Quaternion : IEquatable<Quaternion>
     {
-        /// <summary>X value</summary>
-        public float X;
-        /// <summary>Y value</summary>
-        public float Y;
-        /// <summary>Z value</summary>
-        public float Z;
-        /// <summary>W value</summary>
-        public float W;
+    /// <summary>X value</summary>
+    public float X { get; set; }
+    /// <summary>Y value</summary>
+    public float Y { get; set; }
+    /// <summary>Z value</summary>
+    public float Z { get; set; }
+    /// <summary>W value</summary>
+    public float W { get; set; }
 
-        #region Constructors
+    #region Constructors
 
-        public Quaternion(float x, float y, float z, float w)
+    public Quaternion(float x, float y, float z, float w)
         {
             X = x;
             Y = y;
@@ -311,6 +311,16 @@ namespace OpenMetaverse
                 yaw = (float)Math.Atan2((Z * W + X * Y), 0.5f - tX - tZ);
             }
         }
+
+
+    /// <summary>
+    /// Convert quaternion to euler angles vector
+    /// </summary>
+    /// <returns></returns>
+    public Vector3 ToEulerVector() {
+      GetEulerAngles(out float r, out float p, out float y);
+      return new Vector3(r, p, y);
+		}
 
         /// <summary>
         /// Convert this quaternion to an angle around an axis

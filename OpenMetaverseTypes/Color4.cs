@@ -36,25 +36,25 @@ namespace OpenMetaverse
     [StructLayout(LayoutKind.Sequential)]
     public struct Color4 : IComparable<Color4>, IEquatable<Color4>
     {
-        /// <summary>Red</summary>
-        public float R;
-        /// <summary>Green</summary>
-        public float G;
-        /// <summary>Blue</summary>
-        public float B;
-        /// <summary>Alpha</summary>
-        public float A;
+    /// <summary>Red</summary>
+    public float R { get; set; }
+    /// <summary>Green</summary>
+    public float G { get; set; }
+    /// <summary>Blue</summary>
+    public float B { get; set; }
+    /// <summary>Alpha</summary>
+    public float A { get; set; }
 
-        #region Constructors
+    #region Constructors
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="r"></param>
-        /// <param name="g"></param>
-        /// <param name="b"></param>
-        /// <param name="a"></param>
-        public Color4(byte r, byte g, byte b, byte a)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="r"></param>
+    /// <param name="g"></param>
+    /// <param name="b"></param>
+    /// <param name="a"></param>
+    public Color4(byte r, byte g, byte b, byte a)
         {
             const float quanta = 1.0f / 255.0f;
 

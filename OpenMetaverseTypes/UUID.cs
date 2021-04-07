@@ -36,17 +36,17 @@ namespace OpenMetaverse
     public struct UUID : IComparable<UUID>, IEquatable<UUID>
     {
         /// <summary>The System.Guid object this struct wraps around</summary>
-        public Guid Guid;
+        public Guid Guid { get; set; }
 
-        #region Constructors
+    #region Constructors
 
-        /// <summary>
-        /// Constructor that takes a string UUID representation
-        /// </summary>
-        /// <param name="val">A string representation of a UUID, case 
-        /// insensitive and can either be hyphenated or non-hyphenated</param>
-        /// <example>UUID("11f8aa9c-b071-4242-836b-13b7abe0d489")</example>
-        public UUID(string val)
+    /// <summary>
+    /// Constructor that takes a string UUID representation
+    /// </summary>
+    /// <param name="val">A string representation of a UUID, case 
+    /// insensitive and can either be hyphenated or non-hyphenated</param>
+    /// <example>UUID("11f8aa9c-b071-4242-836b-13b7abe0d489")</example>
+    public UUID(string val)
         {
             if (String.IsNullOrEmpty(val))
                 Guid = new Guid();
