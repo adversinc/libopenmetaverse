@@ -89,16 +89,16 @@
             An 8-bit color structure including an alpha channel
             </summary>
         </member>
-        <member name="F:OpenMetaverse.Color4.R">
+        <member name="P:OpenMetaverse.Color4.R">
             <summary>Red</summary>
         </member>
-        <member name="F:OpenMetaverse.Color4.G">
+        <member name="P:OpenMetaverse.Color4.G">
             <summary>Green</summary>
         </member>
-        <member name="F:OpenMetaverse.Color4.B">
+        <member name="P:OpenMetaverse.Color4.B">
             <summary>Blue</summary>
         </member>
-        <member name="F:OpenMetaverse.Color4.A">
+        <member name="P:OpenMetaverse.Color4.A">
             <summary>Alpha</summary>
         </member>
         <member name="M:OpenMetaverse.Color4.#ctor(System.Byte,System.Byte,System.Byte,System.Byte)">
@@ -1212,16 +1212,16 @@
         <member name="F:OpenMetaverse.Matrix4.Identity">
             <summary>A 4x4 identity matrix</summary>
         </member>
-        <member name="F:OpenMetaverse.Quaternion.X">
+        <member name="P:OpenMetaverse.Quaternion.X">
             <summary>X value</summary>
         </member>
-        <member name="F:OpenMetaverse.Quaternion.Y">
+        <member name="P:OpenMetaverse.Quaternion.Y">
             <summary>Y value</summary>
         </member>
-        <member name="F:OpenMetaverse.Quaternion.Z">
+        <member name="P:OpenMetaverse.Quaternion.Z">
             <summary>Z value</summary>
         </member>
-        <member name="F:OpenMetaverse.Quaternion.W">
+        <member name="P:OpenMetaverse.Quaternion.W">
             <summary>W value</summary>
         </member>
         <member name="M:OpenMetaverse.Quaternion.#ctor(System.Single,System.Single,System.Single)">
@@ -1279,6 +1279,12 @@
             <param name="roll">X euler angle</param>
             <param name="pitch">Y euler angle</param>
             <param name="yaw">Z euler angle</param>
+        </member>
+        <member name="M:OpenMetaverse.Quaternion.ToEulerVector">
+            <summary>
+            Convert quaternion to euler angles vector
+            </summary>
+            <returns></returns>
         </member>
         <member name="M:OpenMetaverse.Quaternion.GetAxisAngle(OpenMetaverse.Vector3@,System.Single@)">
             <summary>
@@ -2086,7 +2092,7 @@
             Life networking protocol
             </summary>
         </member>
-        <member name="F:OpenMetaverse.UUID.Guid">
+        <member name="P:OpenMetaverse.UUID.Guid">
             <summary>The System.Guid object this struct wraps around</summary>
         </member>
         <member name="M:OpenMetaverse.UUID.#ctor(System.String)">
@@ -2357,13 +2363,13 @@
             A three-dimensional vector with floating-point values
             </summary>
         </member>
-        <member name="F:OpenMetaverse.Vector3.X">
+        <member name="P:OpenMetaverse.Vector3.X">
             <summary>X value</summary>
         </member>
-        <member name="F:OpenMetaverse.Vector3.Y">
+        <member name="P:OpenMetaverse.Vector3.Y">
             <summary>Y value</summary>
         </member>
-        <member name="F:OpenMetaverse.Vector3.Z">
+        <member name="P:OpenMetaverse.Vector3.Z">
             <summary>Z value</summary>
         </member>
         <member name="M:OpenMetaverse.Vector3.#ctor(System.Byte[],System.Int32)">

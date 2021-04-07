@@ -177,54 +177,50 @@ namespace OpenMetaverse
             return M11 + M22 + M33 + M44;
         }
 
-        /// <summary>
-        /// Convert this matrix to euler rotations
-        /// </summary>
-        /// <param name="roll">X euler angle</param>
-        /// <param name="pitch">Y euler angle</param>
-        /// <param name="yaw">Z euler angle</param>
-        public void GetEulerAngles(out float roll, out float pitch, out float yaw)
-        {
-            double angleX, angleY, angleZ;
-            double cx, cy, cz; // cosines
-            double sx, sz; // sines
+    /// <summary>
+    /// Convert this matrix to euler rotations
+    /// </summary>
+    /// <param name="roll">X euler angle</param>
+    /// <param name="pitch">Y euler angle</param>
+    /// <param name="yaw">Z euler angle</param>
+    public void GetEulerAngles(out float roll, out float pitch, out float yaw) {
+      double angleX, angleY, angleZ;
+      double cx, cy, cz; // cosines
+      double sx, sz; // sines
 
-            angleY = Math.Asin(Utils.Clamp(M13, -1f, 1f));
-            cy = Math.Cos(angleY);
+      angleY = Math.Asin(Utils.Clamp(M13, -1f, 1f));
+      cy = Math.Cos(angleY);
 
-            if (Math.Abs(cy) > 0.005f)
-            {
-                // No gimbal lock
-                cx = M33 / cy;
-                sx = (-M23) / cy;
+      if(Math.Abs(cy) > 0.005f) {
+        // No gimbal lock
+        cx = M33 / cy;
+        sx = (-M23) / cy;
 
-                angleX = (float)Math.Atan2(sx, cx);
+        angleX = (float)Math.Atan2(sx, cx);
 
-                cz = M11 / cy;
-                sz = (-M12) / cy;
+        cz = M11 / cy;
+        sz = (-M12) / cy;
 
-                angleZ = (float)Math.Atan2(sz, cz);
-            }
-            else
-            {
-                // Gimbal lock
-                angleX = 0;
+        angleZ = (float)Math.Atan2(sz, cz);
+      } else {
+        // Gimbal lock
+        angleX = 0;
 
-                cz = M22;
-                sz = M21;
+        cz = M22;
+        sz = M21;
 
-                angleZ = Math.Atan2(sz, cz);
-            }
+        angleZ = Math.Atan2(sz, cz);
+      }
 
-            // Return only positive angles in [0,360]
-            if (angleX < 0) angleX += 360d;
-            if (angleY < 0) angleY += 360d;
-            if (angleZ < 0) angleZ += 360d;
+      // Return only positive angles in [0,360]
+      if(angleX < 0) angleX += 2 * Math.PI;
+      if(angleY < 0) angleY += 2 * Math.PI;
+      if(angleZ < 0) angleZ += 2 * Math.PI;
 
-            roll = (float)angleX;
-            pitch = (float)angleY;
-            yaw = (float)angleZ;
-        }
+      roll = (float)angleX;
+      pitch = (float)angleY;
+      yaw = (float)angleZ;
+    }
 
         /// <summary>
         /// Convert this matrix to a quaternion rotation
@@ -280,14 +276,13 @@ namespace OpenMetaverse
 
         public bool Decompose(out Vector3 scale, out Quaternion rotation, out Vector3 translation)
         {
-            translation.X = this.M41;
-            translation.Y = this.M42;
-            translation.Z = this.M43;
+      translation = new Vector3(this.M41, this.M42, this.M43);
 
             float xs = (Math.Sign(M11 * M12 * M13 * M14) < 0) ? -1 : 1;
             float ys = (Math.Sign(M21 * M22 * M23 * M24) < 0) ? -1 : 1;
             float zs = (Math.Sign(M31 * M32 * M33 * M34) < 0) ? -1 : 1;
 
+      scale = new Vector3();
             scale.X = xs * (float)Math.Sqrt(this.M11 * this.M11 + this.M12 * this.M12 + this.M13 * this.M13);
             scale.Y = ys * (float)Math.Sqrt(this.M21 * this.M21 + this.M22 * this.M22 + this.M23 * this.M23);
             scale.Z = zs * (float)Math.Sqrt(this.M31 * this.M31 + this.M32 * this.M32 + this.M33 * this.M33);

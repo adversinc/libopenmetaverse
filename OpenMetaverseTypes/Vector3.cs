@@ -27,6 +27,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Globalization;
+using System.Runtime.Serialization;
 
 namespace OpenMetaverse
 {
@@ -37,16 +38,16 @@ namespace OpenMetaverse
     [StructLayout(LayoutKind.Sequential)]
     public struct Vector3 : IComparable<Vector3>, IEquatable<Vector3>
     {
-        /// <summary>X value</summary>
-        public float X;
-        /// <summary>Y value</summary>
-        public float Y;
-        /// <summary>Z value</summary>
-        public float Z;
+    /// <summary>X value</summary>
+    public float X { get; set; }
+    /// <summary>Y value</summary>
+    public float Y { get; set; }
+    /// <summary>Z value</summary>
+    public float Z { get; set; }
 
-        #region Constructors
+    #region Constructors
 
-        public Vector3(float x, float y, float z)
+    public Vector3(float x, float y, float z)
         {
             X = x;
             Y = y;
