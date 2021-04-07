@@ -1,8 +1,8 @@
 compile.bat
-# *.csproj
+*.csproj
 *.user
 *.userprefs
-# *.sln
+*.sln
 *.suo
 *.cache
 
