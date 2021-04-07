@@ -1037,16 +1037,14 @@ namespace OpenMetaverse
         /// </code>
         /// </example>
         public void RequestImage(UUID textureID, ImageType imageType, float priority, int discardLevel,
-            uint packetStart, TextureDownloadCallback callback, bool progress)
-        {
-            if (Client.Settings.USE_HTTP_TEXTURES &&
-                Client.Network.CurrentSim.Caps != null &&
-                Client.Network.CurrentSim.Caps.CapabilityURI("GetTexture") != null)
-            {
+            uint packetStart, TextureDownloadCallback callback, bool progress) {
+            if(Client.Settings.USE_CDN_TEXTURES) {
+                var uri = new Uri("http://asset-cdn.glb.agni.lindenlab.com");
+                HttpRequestTexture(textureID, imageType, priority, discardLevel, packetStart, callback, progress, uri);
+            } else if(Client.Settings.USE_HTTP_TEXTURES && Client.Network?.CurrentSim?.Caps?.CapabilityURI("GetTexture") != null) {
                 HttpRequestTexture(textureID, imageType, priority, discardLevel, packetStart, callback, progress);
-            }
-            else
-            {
+            } 
+            else {
                 Texture.RequestTexture(textureID, imageType, priority, discardLevel, packetStart, callback, progress);
             }
         }
@@ -1256,7 +1254,7 @@ namespace OpenMetaverse
         // pass to the UDP TexturePipeline in case we need to fall back to it
         // (Linden servers currently (1.42) don't support bakes downloads via HTTP)
         private void HttpRequestTexture(UUID textureID, ImageType imageType, float priority, int discardLevel,
-    uint packetStart, TextureDownloadCallback callback, bool progress)
+    uint packetStart, TextureDownloadCallback callback, bool progress, Uri url = null)
         {
             if (textureID == UUID.Zero || callback == null)
                 return;
@@ -1290,7 +1288,9 @@ namespace OpenMetaverse
                     };
             }
 
-            Uri url = Client.Network.CurrentSim.Caps.CapabilityURI("GetTexture");
+            if(url == null) {
+                url = Client.Network.CurrentSim.Caps.CapabilityURI("GetTexture");
+            }
 
             DownloadRequest req = new DownloadRequest(
                 new Uri(string.Format("{0}/?texture_id={1}", url.ToString(), textureID.ToString())),

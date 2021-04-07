@@ -332,6 +332,11 @@ namespace OpenMetaverse
         /// </summary>
         public bool USE_HTTP_TEXTURES = true;
 
+        /// <summary>
+        /// Download textures through CDN
+        /// </summary>
+        public bool USE_CDN_TEXTURES = false;
+
         /// <summary>The maximum number of concurrent texture downloads allowed</summary>
         /// <remarks>Increasing this number will not necessarily increase texture retrieval times due to
         /// simulator throttles</remarks>
