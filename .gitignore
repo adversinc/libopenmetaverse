@@ -9,3 +9,5 @@ compile.bat
 [Oo]bj/
 [Bb]in/
 
+
+bin/XMLRPC.dll
