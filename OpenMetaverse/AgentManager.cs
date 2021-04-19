@@ -1,4 +1,4 @@
-/*
+п»ї/*
  * Copyright (c) 2006-2016, openmetaverse.co
  * All rights reserved.
  *
@@ -1591,15 +1591,17 @@ namespace OpenMetaverse
         /// <summary>
         /// Request any instant messages sent while the client was offline to be resent.
         /// </summary>
-        public void RetrieveInstantMessages() {
+        public void RetrieveInstantMessages(bool forceOld = false) {
             var capUrl = Client.Network.CurrentSim.Caps.CapabilityURI("ReadOfflineMsgs");
 
-            if(capUrl == null) {
+            if(capUrl == null || forceOld) {
+                Logger.Log("RetrieveInstantMessages using legacy packet", Helpers.LogLevel.Warning, Client);
                 RetrieveInstantMessagesPacket p = new RetrieveInstantMessagesPacket();
                 p.AgentData.AgentID = Client.Self.AgentID;
                 p.AgentData.SessionID = Client.Self.SessionID;
                 Client.Network.SendPacket(p);
             } else {
+                Logger.Log("RetrieveInstantMessages using caps", Helpers.LogLevel.Warning, Client);
                 RequestOfflineMessages();
             }
         }
@@ -4889,7 +4891,7 @@ namespace OpenMetaverse
 							groupUUID.FromBytes(im.BinaryBucket, i);
 							i += 16;
 
-							/* Игнорируем эту часть, так как пока не пользуемся названием объекта
+							/* Ignore this part since we don't use the object name yet
 							byte[] buf = new byte[64];
 							for (int j = 0; j < 64 && buf[j] != 0; j++) {
 								buf[j] = im.BinaryBucket[i++];

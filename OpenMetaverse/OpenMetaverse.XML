@@ -1332,7 +1332,7 @@
             can be used however only scripts listening on the specified channel will see the message</param>
             <param name="type">Denotes the type of message being sent, shout, whisper, etc.</param>
         </member>
-        <member name="M:OpenMetaverse.AgentManager.RetrieveInstantMessages">
+        <member name="M:OpenMetaverse.AgentManager.RetrieveInstantMessages(System.Boolean)">
             <summary>
             Request any instant messages sent while the client was offline to be resent.
             </summary>
@@ -21064,6 +21064,11 @@
         <member name="F:OpenMetaverse.Settings.USE_HTTP_TEXTURES">
             <summary>
             Download textures using GetTexture capability when available
+            </summary>
+        </member>
+        <member name="F:OpenMetaverse.Settings.USE_CDN_TEXTURES">
+            <summary>
+            Download textures through CDN
             </summary>
         </member>
         <member name="F:OpenMetaverse.Settings.MAX_CONCURRENT_TEXTURE_DOWNLOADS">
